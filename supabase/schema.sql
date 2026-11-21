@@ -37,6 +37,8 @@ language sql
 security definer
 set search_path = public
 as $$
+  -- Housekeeping: now and then, drop counters older than a week (they are only needed for today's limit).
+  delete from public.ai_usage where random() < 0.02 and day < current_date - 7;
   insert into public.ai_usage as u (key, day, n)
   values (p_key, (now() at time zone 'Asia/Kolkata')::date, 1)
   on conflict (key, day) do update set n = u.n + 1
@@ -44,6 +46,3 @@ as $$
 $$;
 revoke all on function public.bump_ai_usage(text) from public, anon, authenticated;
 grant execute on function public.bump_ai_usage(text) to service_role;
-
--- Optional housekeeping: delete usage rows older than a week (safe to run any time).
--- delete from public.ai_usage where day < current_date - 7;

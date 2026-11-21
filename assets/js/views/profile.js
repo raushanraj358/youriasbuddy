@@ -42,6 +42,7 @@ export function mount(el) {
               <button class="btn block">${icon('mail', 16)} Email me a sign-in link</button>
             </form></details>` : ''}
           <p class="hint">What you've already done on this device will be saved to your account.</p>
+          <p class="hint">By continuing, you agree to our <a href="terms.html" target="_blank">Terms of Use</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</p>
         </div>`}
       </div>`;
     }
