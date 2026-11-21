@@ -14,16 +14,21 @@ import * as notes from './views/notes.js';
 import * as resources from './views/resources.js';
 import * as reminders from './views/reminders.js';
 import * as settings from './views/settings.js';
+import * as profile from './views/profile.js';
+import * as syllabus from './views/syllabus.js';
+import { initCloud, cloud, onCloudChange } from './cloud.js';
 
 const ROUTES = {
   dashboard: { title: 'Dashboard', icon: 'home', view: dashboard, group: 'Plan', tab: 'Home' },
   tracker: { title: 'Daily Tracker', icon: 'tracker', view: tracker, group: 'Plan', tab: 'Tracker', sub: 'Plan the day, build habits, review consistency' },
   study: { title: 'Study Hours', icon: 'timer', view: study, group: 'Plan', tab: 'Timer', sub: 'Focus timer, logs and analytics' },
   reminders: { title: 'Reminders', icon: 'bell', view: reminders, group: 'Plan', sub: 'Never miss your routine' },
+  syllabus: { title: 'Study Material', icon: 'book', view: syllabus, group: 'Learn', tab: 'Study', sub: 'The UPSC CSE syllabus, topic by topic, with study notes' },
   quiz: { title: 'AI Quiz', icon: 'sparkles', view: quiz, group: 'Learn', tab: 'Quiz', sub: 'UPSC Prelims & Mains practice, generated on any topic' },
   notes: { title: 'Notes', icon: 'notes', view: notes, group: 'Learn', tab: 'Notes', sub: 'Your notebook with spaced revision' },
-  resources: { title: 'Resources', icon: 'library', view: resources, group: 'Learn', tab: 'Library', sub: 'Curated sources and your own reading list' },
-  settings: { title: 'Settings', icon: 'settings', view: settings, group: 'You', sub: 'Profile, AI, appearance and data' },
+  resources: { title: 'Resources', icon: 'library', view: resources, group: 'Learn', sub: 'Curated sources and your own reading list' },
+  profile: { title: 'Profile', icon: 'user', view: profile, group: 'You', sub: 'Your account, goal and journey so far' },
+  settings: { title: 'Settings', icon: 'settings', view: settings, group: 'You', sub: 'AI, appearance and data' },
 };
 
 /* ---------- Navigation ---------- */
@@ -61,6 +66,18 @@ function renderCountdown() {
     <div class="big">${d}</div>
     <div class="sub">${fmtDate(S().profile.examDate, { day: 'numeric', month: 'long', year: 'numeric' })}</div>
     <div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div>`;
+}
+
+function renderAccountBtn() {
+  const btn = $('#accountBtn');
+  const c = cloud();
+  const u = c.user;
+  btn.dataset.sync = u ? c.status : '';
+  const name = S().profile.name || u?.user_metadata?.full_name || u?.email || '';
+  if (u?.user_metadata?.avatar_url) btn.innerHTML = `<img src="${esc(u.user_metadata.avatar_url)}" alt="" referrerpolicy="no-referrer">`;
+  else if (u) btn.innerHTML = `<span class="avatar">${esc((name[0] || '?').toUpperCase())}</span>`;
+  else btn.innerHTML = icon('user', 18);
+  btn.title = u ? `Profile · ${u.email || 'signed in'}` : 'Profile · sign in to save your progress';
 }
 
 function renderThemeBtn() {
@@ -127,7 +144,7 @@ function onboarding() {
     title: 'Welcome',
     body: `
       <div class="onboard-hero"><img src="assets/img/logo.svg" alt=""><h3>Your UPSC journey, organised.</h3>
-      <p class="muted" style="margin:6px 0 18px">Tracker, focus timer, reminders, notes, resources and AI quizzes — all in one calm place. Your data stays on this device.</p></div>
+      <p class="muted" style="margin:6px 0 18px">Tracker, focus timer, reminders, notes, resources and AI quizzes — all in one calm place. ${cloud().configured ? 'Already have an account? Sign in to bring back your progress.' : 'Your data stays on this device.'}</p></div>
       <div class="stack">
         <div class="field"><label for="obName">What should we call you?</label><input class="input" id="obName" placeholder="Your name" value="${esc(p.name)}"></div>
         <div class="grid g-2" style="gap:12px">
@@ -136,8 +153,12 @@ function onboarding() {
         </div>
         <p class="hint">CSE Prelims 2027 is pre-filled as 23 May 2027 — update it once UPSC publishes the official calendar.</p>
       </div>`,
-    foot: `<button class="btn accent lg block" id="obGo">Start preparing ${icon('arrow', 18)}</button>`,
+    foot: `${cloud().configured && !cloud().user ? `<a class="btn ghost lg" href="#/profile" data-close>Sign in</a>` : ''}<button class="btn accent lg block" id="obGo" style="flex:1">Start preparing ${icon('arrow', 18)}</button>`,
     onMount(m, close) {
+      m.querySelector('a[href="#/profile"]')?.addEventListener('click', () => {
+        p.onboarded = true; // they'll set up their profile after signing in
+        commit();
+      });
       m.querySelector('#obGo').addEventListener('click', () => {
         p.name = m.querySelector('#obName').value.trim();
         p.examDate = m.querySelector('#obExam').value || p.examDate;
@@ -158,13 +179,25 @@ renderNav();
 renderCountdown();
 applyTheme();
 renderTimerChip();
+renderAccountBtn();
 navigate();
+onCloudChange(renderAccountBtn);
+// Cloud data replaced what was on this device (sign-in on a new device, edits from another device, sign-out).
+window.addEventListener('yib:datareplaced', () => {
+  renderNav();
+  renderCountdown();
+  applyTheme();
+  renderTimerChip();
+  renderAccountBtn();
+  navigate();
+});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderThemeBtn);
 
 let lastNavDue = notesDue().length;
 subscribe(() => {
   renderCountdown();
   renderTimerChip();
+  renderAccountBtn();
   const due = notesDue().length;
   if (due !== lastNavDue) {
     lastNavDue = due;
@@ -181,4 +214,10 @@ setInterval(() => {
 }, 1000);
 checkReminders();
 
-if (!S().profile.onboarded) onboarding();
+// Restore a signed-in user's data before deciding whether this is a first visit.
+Promise.race([initCloud(), new Promise((r) => setTimeout(r, 6000))])
+  .catch((e) => console.warn(e))
+  .finally(() => {
+    renderAccountBtn();
+    if (!S().profile.onboarded && !document.querySelector('.modal-backdrop')) onboarding();
+  });

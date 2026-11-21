@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "YourIASBuddy — UPSC CSE study companion (static site + one serverless AI function)",
-  "engines": { "node": ">=18" }
+  "description": "YourIASBuddy \u2014 UPSC CSE study companion (static site on GitHub Pages + Supabase for accounts and AI)",
+  "engines": {
+    "node": ">=18"
+  }
 }

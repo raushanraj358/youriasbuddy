@@ -1,0 +1,4 @@
+# Used only if you deploy with the Supabase CLI (`supabase functions deploy ai`).
+# The function checks the caller itself (signed-in user or guest), so the gateway JWT check is off.
+[functions.ai]
+verify_jwt = false

@@ -656,3 +656,29 @@ p { margin: 0; }
   .card { padding: 16px; }
   .topbar-title p { display: none; }
 }
+
+/* ---------- Account ---------- */
+.avatar { width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 14px; }
+.avatar.lg { width: 52px; height: 52px; font-size: 22px; flex: none; }
+.account-btn { overflow: hidden; padding: 0; position: relative; }
+.account-btn img { width: 100%; height: 100%; object-fit: cover; }
+.account-btn .avatar { border-radius: 0; }
+.account-btn[data-sync="pending"]::after, .account-btn[data-sync="syncing"]::after,
+.account-btn[data-sync="paused"]::after, .account-btn[data-sync="offline"]::after, .account-btn[data-sync="error"]::after {
+  content: ''; position: absolute; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 2px var(--surface);
+}
+.account-btn[data-sync="pending"]::after, .account-btn[data-sync="syncing"]::after { background: var(--muted); }
+.adv > summary::-webkit-details-marker { display: none; }
+
+/* ---------- Study material ---------- */
+.syl-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px; }
+.syl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.syl-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
+.syl-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.syl-card h4 { font-size: 15px; }
+.syl-topic { align-items: center; }
+.status-pill { flex: none; min-width: 92px; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); color: var(--c); background: color-mix(in srgb, var(--c) 10%, transparent); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.status-pill:hover { background: color-mix(in srgb, var(--c) 18%, transparent); }
+.syl-topic-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
+.syl-topic-head h2 { font-size: 32px; line-height: 1.15; }
+@media (max-width: 560px) { .syl-topic-head h2 { font-size: 26px; } .status-pill { min-width: 0; } }

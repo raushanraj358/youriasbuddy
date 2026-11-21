@@ -2,7 +2,7 @@
   "name": "YourIASBuddy",
   "short_name": "IASBuddy",
   "description": "Your UPSC CSE study companion: tracker, timer, reminders, notes, resources and AI quizzes.",
-  "start_url": "/#/dashboard",
+  "start_url": "./#/dashboard",
   "display": "standalone",
   "background_color": "#14161d",
   "theme_color": "#14161d",

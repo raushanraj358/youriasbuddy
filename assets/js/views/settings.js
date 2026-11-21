@@ -2,7 +2,9 @@ import { S, commit, exportJSON, replaceAll, resetAll } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, download, dateKey } from '../utils.js';
 import { toast, confirmDialog } from '../ui.js';
-import { runAI, cleanMCQs } from '../ai.js';
+import { cloud } from '../cloud.js';
+import { runAI, cleanMCQs, aiUsage } from '../ai.js';
+import { config } from '../config.js';
 import { listGeminiModels, GEMINI_AUTO_CHAIN } from '../providers.js';
 
 const OPENAI_MODELS = ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4.1', 'gpt-5-mini', 'gpt-5'];
@@ -10,27 +12,23 @@ let geminiModels = null; // loaded from the user's key
 
 export function mount(el) {
   let showKey = false;
+  let advOpen = false;
+  el.addEventListener('toggle', (e) => { if (e.target.classList?.contains('adv')) advOpen = e.target.open; }, true);
 
   function draw() {
-    const { profile: p, settings: s } = S();
+    const { settings: s } = S();
+    const cfg = config();
+    const use = aiUsage();
+    const ownKey = Boolean(s.provider === 'openai' ? s.apiKey : s.geminiKey);
     el.innerHTML = `
+    <div class="notice info" style="margin-bottom:18px">${icon('target', 18)}<div style="flex:1">Your name, exam date, daily target and account now live on your <a href="#/profile" style="font-weight:700">Profile →</a></div></div>
     <div class="grid g-2">
       <div class="card">
-        <div class="card-head"><h3>${icon('target', 17)} Profile & goal</h3></div>
-        <form id="profile" class="stack">
-          <div class="field"><label>Name</label><input class="input" name="name" value="${esc(p.name)}" placeholder="Your name"></div>
-          <div class="grid g-2" style="gap:12px">
-            <div class="field"><label>Prelims date</label><input class="input" type="date" name="examDate" value="${p.examDate}"></div>
-            <div class="field"><label>Preparation started</label><input class="input" type="date" name="startDate" value="${p.startDate || dateKey()}" max="${dateKey()}"></div>
-          </div>
-          <div class="field"><label>Daily study target (hours)</label><input class="input" type="number" min="1" max="16" name="dailyTarget" value="${p.dailyTarget}"></div>
-          <p class="hint">Default Prelims date is 23 May 2027. Verify on the <a href="https://upsc.gov.in/examinations/exam-calendar" target="_blank" rel="noopener">UPSC exam calendar</a>.</p>
-          <div><button class="btn primary">Save profile</button></div>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><h3>${icon('sparkles', 17)} AI quiz engine</h3>${(s.provider === 'openai' ? s.apiKey : s.geminiKey) ? '<span class="tag" style="color:var(--good)">● Connected key saved</span>' : '<span class="tag">Not set up</span>'}</div>
+        <div class="card-head"><h3>${icon('sparkles', 17)} AI quiz engine</h3>${ownKey ? '<span class="tag" style="color:var(--good)">● Your own key</span>' : cfg.serverAI ? '<span class="tag" style="color:var(--good)">● Ready</span>' : '<span class="tag">Not set up</span>'}</div>
+        ${cfg.serverAI ? `
+        <div class="notice info" style="background:var(--good-soft);border-color:transparent;margin-bottom:14px">${icon('check', 18)}<div><b>AI quizzes work out of the box.</b> No setup needed.<br><span class="hint">${ownKey ? 'You are using your own key below (no daily limit).' : `Today: ${use.used} of ${use.limit} free AI requests used. Each quiz, study-notes page or answer evaluation uses 1.${cloud().user ? '' : ` <a href="#/profile">Sign in with Google</a> to get ${cfg.aiDailyLimit} a day.`}`}</span></div></div>` : ''}
+        <details ${advOpen || !(cfg.serverAI && !ownKey) ? 'open' : ''} class="adv">
+        ${cfg.serverAI ? `<summary class="hint" style="cursor:pointer;font-weight:700;margin-bottom:12px">Advanced: use your own API key (no daily limit)</summary>` : '<summary hidden></summary>'}
         <div class="stack">
           <div class="field"><span class="label">Provider</span><div class="seg">
             <button class="${s.provider !== 'openai' ? 'on' : ''}" data-provider="gemini">Google Gemini · Free</button>
@@ -59,13 +57,14 @@ export function mount(el) {
             <span class="hint">The OpenAI API is pay-as-you-go (separate from a ChatGPT subscription) and needs billing credit.</span></div>
           <div class="field"><label for="model">Model</label>
             <input class="input" id="model" list="models" value="${esc(s.model)}"><datalist id="models">${OPENAI_MODELS.map((m) => `<option value="${m}">`).join('')}</datalist></div>`}
-          <p class="hint">Keys are stored only in this browser and sent only to the provider. Leave empty if your deployed site has a server key.</p>
+          <p class="hint">Keys are stored only in this browser, are never synced to your account, and are sent only to the provider.</p>
           <div class="row wrap">
             <button class="btn primary" data-test>${icon('sparkles', 15)} Save & test</button>
             ${(s.provider === 'openai' ? s.apiKey : s.geminiKey) ? `<button class="btn ghost danger" data-clearkey>Remove key</button>` : ''}
           </div>
           <div id="testOut"></div>
         </div>
+        </details>
       </div>
 
       <div class="card">
@@ -78,7 +77,7 @@ export function mount(el) {
 
       <div class="card">
         <div class="card-head"><h3>${icon('download', 17)} Your data</h3></div>
-        <p class="hint" style="margin-bottom:14px">Everything is stored privately in this browser. Export a backup regularly, and import it on another device to continue.</p>
+        <p class="hint" style="margin-bottom:14px">Your data is stored in this browser${cloud().user ? ' and synced to your account' : ''}. <a href="#/profile">Sign in</a> to keep it across devices, or export a backup file.</p>
         <div class="row wrap">
           <button class="btn" data-export>${icon('download', 15)} Export backup</button>
           <label class="btn">${icon('upload', 15)} Import backup<input type="file" id="importFile" accept="application/json,.json" hidden></label>
@@ -90,19 +89,6 @@ export function mount(el) {
     </div>
     <p class="hint" style="text-align:center;margin-top:28px">YourIASBuddy · made for the 2027 batch · <span class="serif" style="font-size:16px">Stay consistent.</span></p>`;
   }
-
-  el.addEventListener('submit', (e) => {
-    if (e.target.id !== 'profile') return;
-    e.preventDefault();
-    const f = e.target;
-    const p = S().profile;
-    p.name = f.name.value.trim();
-    p.examDate = f.examDate.value || p.examDate;
-    p.startDate = f.startDate.value || p.startDate;
-    p.dailyTarget = Math.max(1, Math.min(16, Number(f.dailyTarget.value) || 8));
-    commit();
-    toast('Profile saved', 'good');
-  });
 
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button');

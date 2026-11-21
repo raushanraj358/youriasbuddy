@@ -19,10 +19,11 @@ function defaults() {
     resources: [], // user-added
     library: {}, // curated id -> 'todo' | 'doing' | 'done'
     quizzes: [],
+    syllabus: { status: {}, material: {}, custom: {} }, // keys are 'subjectId::topic'
   };
 }
 
-const MERGE_KEYS = ['profile', 'settings', 'habits'];
+const MERGE_KEYS = ['profile', 'settings', 'habits', 'syllabus'];
 function load() {
   const d = defaults();
   try {
@@ -58,19 +59,33 @@ export function commit() {
 }
 export function replaceAll(next) {
   const d = defaults();
-  state = { ...d, ...next, profile: { ...d.profile, ...(next.profile || {}) }, settings: { ...d.settings, ...(next.settings || {}) } };
+  state = { ...d, ...next, profile: { ...d.profile, ...(next.profile || {}) }, settings: { ...d.settings, ...(next.settings || {}) }, syllabus: { ...d.syllabus, ...(next.syllabus || {}) } };
   commit();
 }
 export function resetAll() {
   state = defaults();
   commit();
 }
-export function exportJSON() {
+/** A copy of all data without secrets (API keys never leave this device). */
+export function snapshot() {
   const copy = JSON.parse(JSON.stringify(state));
-  copy.settings.apiKey = ''; // never export secrets
+  copy.settings.apiKey = '';
   copy.settings.geminiKey = '';
+  return copy;
+}
+export function exportJSON() {
+  const copy = snapshot();
   copy.exportedAt = new Date().toISOString();
   return JSON.stringify(copy, null, 2);
+}
+/** True when this device holds no meaningful study data yet. */
+export function isBlank(st = state) {
+  const tasks = Object.values(st.tasks || {}).some((l) => l && l.length);
+  return !tasks && !(st.sessions || []).length && !(st.notes || []).length && !(st.quizzes || []).length && !(st.reminders || []).length && !(st.resources || []).length && !Object.keys(st.library || {}).length && !Object.keys(st.syllabus?.status || {}).length && !Object.keys(st.syllabus?.material || {}).length;
+}
+export function dataSummary(st = state) {
+  const mins = (st.sessions || []).reduce((a, s) => a + (s.minutes || 0), 0);
+  return `${(mins / 60).toFixed(1).replace(/\.0$/, '')}h studied · ${(st.sessions || []).length} sessions · ${(st.notes || []).length} notes · ${(st.quizzes || []).length} quizzes · ${Object.values(st.syllabus?.status || {}).filter((v) => v === 'done' || v === 'revised').length} topics done`;
 }
 
 /* ---------------- Derived metrics ---------------- */

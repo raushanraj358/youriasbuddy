@@ -1,5 +1,5 @@
-// Prompt builder shared by the browser (direct OpenAI mode) and the serverless proxy (/api/ai).
-// Keep this file free of DOM/browser APIs so it can run in Node.
+// Prompt builder shared by the browser (own-key mode) and the Supabase Edge Function (supabase/functions/ai).
+// Keep this file free of DOM/browser APIs and imports: tools/build_edge_function.py inlines it into the function.
 
 const str = (v, max) => String(v ?? '').slice(0, max).trim();
 const int = (v, lo, hi, d) => {
@@ -7,7 +7,7 @@ const int = (v, lo, hi, d) => {
   return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d;
 };
 
-export const TASKS = ['prelims', 'mains', 'evaluate'];
+export const TASKS = ['prelims', 'mains', 'evaluate', 'material'];
 
 const SYSTEM = `You are a senior UPSC Civil Services Examination paper-setter and Mains evaluator with two decades of experience.
 You write questions that mirror the real UPSC standard: precise wording, conceptual depth, static-current linkage, and plausible distractors.
@@ -33,6 +33,9 @@ export function sanitize(task, p = {}) {
   }
   if (task === 'mains') {
     return { ...base, paper: str(p.paper, 20) || 'GS', count: int(p.count, 1, 5, 2), difficulty: str(p.difficulty, 30) || 'UPSC standard', context: str(p.context, 6000) };
+  }
+  if (task === 'material') {
+    return { ...base, paper: str(p.paper, 20) || 'GS' };
   }
   return {
     ...base,
@@ -91,6 +94,19 @@ Rules:
 - "framework": a model answer skeleton with "introduction" (1–2 lines), "body" (5–8 crisp points, multi-dimensional), "conclusion" (1–2 forward-looking lines).
 ${LANG(p.language)}
 Return JSON exactly like: {"questions":[{"question":"","paper":"${p.paper}","marks":10,"wordLimit":150,"directive":"","demand":"","keywords":[],"framework":{"introduction":"","body":[],"conclusion":""}}]}`;
+  } else if (task === 'material') {
+    user = `Write exam-oriented UPSC Civil Services study notes on one syllabus topic, the way a top coaching faculty would for a serious aspirant.
+Subject: ${p.subject} (${p.paper})
+Topic: ${p.topic || p.subject}
+Rules:
+- Accuracy first: use only facts verifiable from NCERTs, standard books (e.g. M. Laxmikanth, Spectrum, G.C. Leong, Shankar IAS) and Government of India sources. If unsure of a fact, leave it out.
+- Cover it for both Prelims (facts, articles, years, bodies, examples) and Mains (analysis, dimensions, issues, way forward).
+- Be crisp: bullet points, 900–1300 words in total. Quote Constitutional Articles, Acts, committees, judgments, schemes and data where relevant, with years.
+- For figures that change over time (rankings, data, counts), add "(verify latest)".
+- "sections": 4–7 logical sub-topics, each with 4–8 information-dense points.
+- "pyqThemes": themes UPSC has asked on this topic in past papers, described in a few words each (do not invent exact questions or years).
+${LANG(p.language)}
+Return JSON exactly like: {"title":"","overview":"2–4 sentences","sections":[{"heading":"","points":[""]}],"keyTerms":[{"term":"","meaning":""}],"prelimsFacts":[""],"mainsAngles":[""],"pyqThemes":[""],"currentLinks":[""],"mnemonic":"","quickRevision":[""],"furtherReading":[""]}`;
   } else {
     user = `Evaluate the following UPSC Mains answer like a strict but constructive UPSC examiner.
 Question (${p.marks} marks, ${p.wordLimit} words): ${p.question}
