@@ -5,6 +5,7 @@ import { ring, barChart, emptyState } from '../ui.js';
 import { TIPS, subjectById, SUBJECTS } from '../data.js';
 import { upcoming } from '../reminders-engine.js';
 import { plain } from '../md.js';
+import { cloud, onCloudChange } from '../cloud.js';
 
 export function mount(el, _p, { setSub }) {
   const today = dateKey();
@@ -13,7 +14,9 @@ export function mount(el, _p, { setSub }) {
   function draw() {
     const st = S();
     const p = st.profile;
-    const name = p.name ? p.name.split(' ')[0] : 'Aspirant';
+    // First name: from the profile, else from the signed-in Google account, else a friendly default.
+    const meta = cloud().user?.user_metadata || {};
+    const name = (p.name || meta.given_name || meta.full_name || meta.name || '').trim().split(/\s+/)[0] || 'Aspirant';
     const target = p.dailyTarget * 60;
     const todayMin = minutesOn(today);
     const streak = studyStreak();
@@ -36,8 +39,8 @@ export function mount(el, _p, { setSub }) {
     el.innerHTML = `
     <section class="hero">
       <div>
-        <div class="eyebrow" style="color:#9c9a92">${esc(greeting())}</div>
-        <h2>${esc(name)}, every hour today<br>is a mark in <em>May 2027.</em></h2>
+        <div class="eyebrow" style="color:#9c9a92">${esc(greeting())}, <span style="color:#f3c79c">${esc(name)}</span></div>
+        <h2>Every hour today<br>is a mark in <em>May 2027.</em></h2>
         <p class="lead">${todayMin ? `You've studied <b style="color:#fff">${fmtMin(todayMin)}</b> today — ${todayMin >= target ? 'target achieved. Brilliant work.' : `${fmtMin(target - todayMin)} to go for your ${p.dailyTarget}h target.`}` : `Your ${p.dailyTarget}-hour target is waiting. Start with one focused block.`}</p>
         <div class="row wrap" style="margin-top:18px">
           <a class="btn accent" href="#/study?start=1">${icon('play', 16)} Start focus session</a>
@@ -151,6 +154,13 @@ export function mount(el, _p, { setSub }) {
   });
 
   draw();
+  // Redraw when sign-in finishes so the account's name appears without a reload.
+  let lastUser = cloud().user?.id;
+  const off = onCloudChange(() => {
+    if (!el.isConnected) return off();
+    if (cloud().user?.id !== lastUser) { lastUser = cloud().user?.id; draw(); }
+  });
+  return off;
 }
 
 // Light heuristic: tag a quick task with a subject if its name appears in the text.
