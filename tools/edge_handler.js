@@ -193,7 +193,8 @@ Deno.serve(async (req) => {
   const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown';
   const limit = userId ? USER_LIMIT : GUEST_LIMIT;
   let used = 0;
-  const { data: n, error } = await admin.rpc('bump_ai_usage', { p_key: userId ? `u:${userId}` : `ip:${ip}` });
+  const usageKey = userId ? `u:${userId}` : `ip:${ip}`;
+  const { data: n, error } = await admin.rpc('bump_ai_usage', { p_key: usageKey });
   if (error) console.error('bump_ai_usage failed (did you run supabase/schema.sql?)', error.message);
   else used = n;
   if (used > limit) {
@@ -210,8 +211,15 @@ Deno.serve(async (req) => {
     const content = await callAI({ provider, key, model, messages });
     return reply(200, { content, used, limit });
   } catch (e) {
+    // A failed request doesn't count towards the daily allowance.
+    if (used > 0) {
+      const { error: re } = await admin.rpc('refund_ai_usage', { p_key: usageKey });
+      if (re) console.error('refund_ai_usage failed (did you run supabase/schema.sql?)', re.message);
+      else used -= 1;
+    }
     if (e.code === 'RATE') return reply(429, { used, limit, error: 'The free AI is busy right now. Please try again in a few minutes, or add your own free Gemini key in Settings.' });
     if (e.code === 'BLOCKED') return reply(422, { used, limit, error: AI_MESSAGES.BLOCKED });
+    if (e.code === 'TIMEOUT' || e.code === 'LENGTH') return reply(504, { used, limit, error: AI_MESSAGES[e.code] });
     console.error('AI call failed', e.code, e.message);
     return reply(502, { used, limit, error: AI_MESSAGES.API });
   }

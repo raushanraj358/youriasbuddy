@@ -52,6 +52,19 @@ $$;
 revoke all on function public.bump_ai_usage(text) from public, anon, authenticated;
 grant execute on function public.bump_ai_usage(text) to service_role;
 
+-- Gives back one request when the AI call failed (failed requests don't count towards the daily limit).
+create or replace function public.refund_ai_usage(p_key text)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.ai_usage set n = greatest(n - 1, 0)
+  where key = p_key and day = (now() at time zone 'Asia/Kolkata')::date;
+$$;
+revoke all on function public.refund_ai_usage(text) from public, anon, authenticated;
+grant execute on function public.refund_ai_usage(text) to service_role;
+
 -- Daily current-affairs digest (one row per IST day), written by the "ai" Edge Function and shown to everyone.
 create table if not exists public.daily_news (
   day         date primary key,

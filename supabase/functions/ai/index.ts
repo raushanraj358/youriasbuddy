@@ -139,7 +139,7 @@ Return JSON exactly like: {"score":0,"outOf":${p.marks},"verdict":"one-line over
 class ProviderError extends Error {
   constructor(msg, code, status) {
     super(msg);
-    this.code = code; // AUTH | RATE | MODEL | API | BLOCKED | EMPTY
+    this.code = code; // AUTH | RATE | MODEL | API | BLOCKED | EMPTY | TIMEOUT | LENGTH
     this.status = status;
   }
 }
@@ -150,7 +150,30 @@ const AI_MESSAGES = {
   MODEL: 'The selected AI model is not available. Choose "Auto" in Settings and try again.',
   BLOCKED: "The AI couldn't answer this request. Please try rephrasing the topic.",
   API: 'The AI service is temporarily unavailable. Please try again in a few minutes.',
+  TIMEOUT: 'The AI is taking too long right now. Please try again, or ask for fewer questions.',
+  LENGTH: 'The answer was too long for the AI to finish. Please ask for fewer questions.',
 };
+
+// Generation limits. Thinking is kept small: it makes long JSON answers (10–20 MCQs) several times slower.
+const THINKING_BUDGET = 512;
+const MAX_OUTPUT_TOKENS = 24576;
+// Per-model attempt and whole-chain time limits (the Supabase Edge Function itself is stopped after ~150 s).
+const ATTEMPT_MS = 60e3;
+const CHAIN_MS = 120e3;
+
+/** An AbortSignal that fires when `outer` aborts or after `ms`; `timedOut()` tells the two apart. */
+function timeoutSignal(outer, ms) {
+  const ctrl = new AbortController();
+  let fired = false;
+  const t = setTimeout(() => { fired = true; ctrl.abort(); }, ms);
+  const onAbort = () => ctrl.abort();
+  if (outer) outer.aborted ? ctrl.abort() : outer.addEventListener('abort', onAbort, { once: true });
+  return {
+    signal: ctrl.signal,
+    timedOut: () => fired,
+    done: () => { clearTimeout(t); outer?.removeEventListener('abort', onAbort); },
+  };
+}
 
 function fail(code, status, raw) {
   if (raw) console.warn(`[AI ${code} ${status}]`, raw);
@@ -174,8 +197,10 @@ function split(messages) {
   return { system, user };
 }
 
-async function geminiOnce({ key, model, messages, signal }) {
+async function geminiRequest({ key, model, messages, signal, thinking }) {
   const { system, user } = split(messages);
+  const generationConfig = { responseMimeType: 'application/json', temperature: 0.7, maxOutputTokens: MAX_OUTPUT_TOKENS };
+  if (thinking) generationConfig.thinkingConfig = { thinkingBudget: THINKING_BUDGET };
   const res = await fetch(`${GEMINI_BASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     signal,
@@ -183,13 +208,31 @@ async function geminiOnce({ key, model, messages, signal }) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts: [{ text: user }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+      generationConfig,
     }),
   });
-  const data = await res.json().catch(() => ({}));
+  return { res, data: await res.json().catch(() => ({})) };
+}
+
+async function geminiOnce({ key, model, messages, signal, ms = ATTEMPT_MS }) {
+  const t = timeoutSignal(signal, ms);
+  let res, data;
+  try {
+    ({ res, data } = await geminiRequest({ key, model, messages, signal: t.signal, thinking: true }));
+    // A model that doesn't accept a thinking budget: ask again without one.
+    if (res.status === 400 && /thinking/i.test(data?.error?.message || '')) {
+      ({ res, data } = await geminiRequest({ key, model, messages, signal: t.signal, thinking: false }));
+    }
+  } catch (e) {
+    if (e.name === 'AbortError' && t.timedOut()) throw fail('TIMEOUT', 504, `${model}: no answer in ${Math.round(ms / 1000)} s`);
+    throw e;
+  } finally {
+    t.done();
+  }
   if (res.ok) {
     const cand = data?.candidates?.[0];
     const text = (cand?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('');
+    if (cand?.finishReason === 'MAX_TOKENS') throw fail('LENGTH', 200, `${model}: output hit the token limit`);
     if (!text) throw fail('BLOCKED', 200, `no text: ${data?.promptFeedback?.blockReason || cand?.finishReason || 'unknown'}`);
     return text;
   }
@@ -202,19 +245,23 @@ async function geminiOnce({ key, model, messages, signal }) {
 
 async function callGemini({ key, model, messages, signal }) {
   const chain = !model || model === 'auto' ? GEMINI_AUTO_CHAIN : [model];
+  const deadline = Date.now() + CHAIN_MS;
   let last;
   for (const m of chain) {
+    const left = deadline - Date.now();
+    if (left < 15e3) break; // not enough time for another model to answer
     try {
-      return await geminiOnce({ key, model: m, messages, signal });
+      return await geminiOnce({ key, model: m, messages, signal, ms: Math.min(ATTEMPT_MS, left) });
     } catch (e) {
-      if (e.name === 'AbortError' || e.code === 'AUTH' || e.code === 'BLOCKED') throw e;
+      if (e.name === 'AbortError' || ['AUTH', 'BLOCKED', 'LENGTH'].includes(e.code)) throw e;
       last = e;
-      // Fall through to the next model on missing model / quota / transient server errors.
-      if (!['MODEL', 'RATE'].includes(e.code) && !(e.status >= 500)) throw e;
+      // Fall through to the next model on missing model / quota / timeout / transient server errors.
+      if (!['MODEL', 'RATE', 'TIMEOUT'].includes(e.code) && !(e.status >= 500)) throw e;
     }
   }
-  // Every model failed: report "busy" for quota limits, otherwise a general "unavailable".
-  if (chain.length > 1 && last?.code !== 'RATE') throw new ProviderError(AI_MESSAGES.API, 'API', last?.status);
+  // Every model failed: say "busy" for quota limits, "too slow" for timeouts, otherwise a general "unavailable".
+  if (last && ['RATE', 'TIMEOUT'].includes(last.code)) throw last;
+  if (chain.length > 1 || !last) throw new ProviderError(AI_MESSAGES.API, 'API', last?.status);
   throw last;
 }
 
@@ -233,13 +280,22 @@ async function listGeminiModels(key) {
 }
 
 async function callOpenAI({ key, model, messages, signal }) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    signal,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: model || 'gpt-4o-mini', messages, response_format: { type: 'json_object' } }),
-  });
-  const data = await res.json().catch(() => ({}));
+  const t = timeoutSignal(signal, CHAIN_MS);
+  let res, data;
+  try {
+    res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      signal: t.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model: model || 'gpt-4o-mini', messages, response_format: { type: 'json_object' } }),
+    });
+    data = await res.json().catch(() => ({}));
+  } catch (e) {
+    if (e.name === 'AbortError' && t.timedOut()) throw fail('TIMEOUT', 504, 'OpenAI: no answer in time');
+    throw e;
+  } finally {
+    t.done();
+  }
   if (!res.ok) {
     const msg = data?.error?.message || '';
     if (res.status === 401) throw fail('AUTH', 401, msg);
@@ -247,6 +303,7 @@ async function callOpenAI({ key, model, messages, signal }) {
     if (isModelUnavailable(res.status, msg)) throw fail('MODEL', res.status, msg);
     throw fail('API', res.status, msg);
   }
+  if (data?.choices?.[0]?.finish_reason === 'length') throw fail('LENGTH', 200, 'OpenAI: output hit the token limit');
   return data?.choices?.[0]?.message?.content || '';
 }
 
@@ -448,7 +505,8 @@ Deno.serve(async (req) => {
   const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown';
   const limit = userId ? USER_LIMIT : GUEST_LIMIT;
   let used = 0;
-  const { data: n, error } = await admin.rpc('bump_ai_usage', { p_key: userId ? `u:${userId}` : `ip:${ip}` });
+  const usageKey = userId ? `u:${userId}` : `ip:${ip}`;
+  const { data: n, error } = await admin.rpc('bump_ai_usage', { p_key: usageKey });
   if (error) console.error('bump_ai_usage failed (did you run supabase/schema.sql?)', error.message);
   else used = n;
   if (used > limit) {
@@ -465,8 +523,15 @@ Deno.serve(async (req) => {
     const content = await callAI({ provider, key, model, messages });
     return reply(200, { content, used, limit });
   } catch (e) {
+    // A failed request doesn't count towards the daily allowance.
+    if (used > 0) {
+      const { error: re } = await admin.rpc('refund_ai_usage', { p_key: usageKey });
+      if (re) console.error('refund_ai_usage failed (did you run supabase/schema.sql?)', re.message);
+      else used -= 1;
+    }
     if (e.code === 'RATE') return reply(429, { used, limit, error: 'The free AI is busy right now. Please try again in a few minutes, or add your own free Gemini key in Settings.' });
     if (e.code === 'BLOCKED') return reply(422, { used, limit, error: AI_MESSAGES.BLOCKED });
+    if (e.code === 'TIMEOUT' || e.code === 'LENGTH') return reply(504, { used, limit, error: AI_MESSAGES[e.code] });
     console.error('AI call failed', e.code, e.message);
     return reply(502, { used, limit, error: AI_MESSAGES.API });
   }

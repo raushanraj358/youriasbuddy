@@ -24,7 +24,7 @@ function saveUse(used, limit) {
 const NETWORK_MSG = 'Could not reach the AI service. Check your internet connection and try again.';
 
 // Only our own, user-friendly server messages are shown as-is; anything else (e.g. raw provider text) becomes a standard message.
-const SAFE_SERVER_MSG = /^(You've used today's|Guests get|The free AI is busy|The AI couldn't answer|Could not compile today's current affairs|Current affairs need|News storage is not set up)/;
+const SAFE_SERVER_MSG = /^(You've used today's|Guests get|The free AI is busy|The AI couldn't answer|The AI is taking too long|The answer was too long|Could not compile today's current affairs|Current affairs need|News storage is not set up)/;
 function serverError(status, data) {
   const msg = typeof data?.error === 'string' ? data.error : '';
   if (msg && SAFE_SERVER_MSG.test(msg)) return new AIError(msg, status === 429 ? 'RATE' : 'API');
@@ -101,7 +101,11 @@ export async function runAI(task, params, { signal } = {}) {
     }
     const data = await res.json().catch(() => null);
     if (data && Number.isFinite(data.used)) saveUse(data.used, data.limit);
-    if (!res.ok || !data) throw serverError(res.ok ? 502 : res.status, data);
+    if (!res.ok || !data) {
+      // A gateway timeout from Supabase has no JSON body of ours.
+      if (!data && [504, 546].includes(res.status)) throw new AIError(AI_MESSAGES.TIMEOUT, 'TIMEOUT');
+      throw serverError(res.ok ? 502 : res.status, data);
+    }
     content = data.content;
   }
   return parseJSON(content);
