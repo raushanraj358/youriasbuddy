@@ -5,17 +5,20 @@ Guidance for Claude Code when working in this repository.
 ## What this is
 
 YourIASBuddy: a study companion web app for UPSC CSE aspirants. It's a **static, no-build, vanilla-JS** single-page app hosted on
-**GitHub Pages** at `https://raushanraj358.github.io/youriasbuddy/`, with **Supabase** for optional accounts, cloud sync and free AI.
-The owner has **not** bought a domain; don't reintroduce Vercel/serverless hosting or absolute `/…` URLs. See README.md for
-user-facing setup.
+**GitHub Pages** with the custom domain **https://youriasbuddy.com** (`www` redirects to it; the old
+`raushanraj358.github.io/youriasbuddy/` URL redirects too). **Supabase** provides optional accounts, cloud sync and free AI.
+Don't reintroduce Vercel/serverless hosting. See README.md for user-facing setup.
 
 ## Hard constraints
 
 - **No build step, no npm dependencies, no bundler.** Native ES modules loaded straight by the browser (`<script type="module">`).
   Don't add a framework, TypeScript, or a package that needs installing.
 - **No Node.js on the dev machine.** Use `python3` for scripts and headless Chrome for checks (see Testing).
-- **The site lives under a sub-path** (`/youriasbuddy/`). Use relative URLs (`assets/...`, `./#/...`), never leading-slash paths.
-  OAuth/magic-link redirects use `location.origin + location.pathname`.
+- **Keep URLs relative** (`assets/...`, `./#/...`), never leading-slash paths, so the app works at the domain root, under the
+  GitHub Pages sub-path and on localhost. OAuth/magic-link redirects use `location.origin + location.pathname`.
+- **Domain changes touch several places:** `ALLOWED_ORIGINS` in `tools/edge_handler.js` (then rebuild the function), Supabase
+  Auth Site URL/Redirect URLs, and the Google OAuth client's JavaScript origins. The GitHub Pages custom domain is set in repo settings
+  (no `CNAME` file; Actions deploys ignore it).
 - **External scripts:** only via pinned CDN URLs (currently `@supabase/supabase-js@2.117.3` from jsDelivr, imported lazily in `cloud.js`).
   Pin exact versions.
 - **Secrets never go in the repo.** `assets/js/config.js` holds only the public Supabase URL + anon/publishable key. The Gemini key lives in

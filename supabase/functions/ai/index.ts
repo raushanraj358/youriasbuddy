@@ -239,14 +239,14 @@ function callAI({ provider, ...rest }) {
 /* ---------------- Edge Function handler (Deno) ---------------- */
 // Secrets (Supabase → Edge Functions → Secrets):
 //   GEMINI_API_KEY        required (or OPENAI_API_KEY)
-//   ALLOWED_ORIGINS       optional, comma-separated; default: GitHub Pages site + localhost
+//   ALLOWED_ORIGINS       optional, comma-separated; default: youriasbuddy.com (+www), GitHub Pages URL, localhost
 //   AI_DAILY_LIMIT        optional, requests/day for signed-in users (default 25)
 //   AI_GUEST_DAILY_LIMIT  optional, requests/day per IP for guests (default 5)
 //   GEMINI_MODEL          optional (default "auto")
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically by Supabase.
 
 const env = (k, d = '') => Deno.env.get(k) || d;
-const ALLOWED = env('ALLOWED_ORIGINS', 'https://raushanraj358.github.io,http://localhost:5173')
+const ALLOWED = env('ALLOWED_ORIGINS', 'https://youriasbuddy.com,https://www.youriasbuddy.com,https://raushanraj358.github.io,http://localhost:5173')
   .split(',')
   .map((s) => s.trim().replace(/\/+$/, ''))
   .filter(Boolean);

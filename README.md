@@ -1,10 +1,10 @@
-# YourIASBuddy
+# YourIASBuddy · youriasbuddy.com
 
 A calm, modern study companion for UPSC Civil Services aspirants (built for the Prelims, May 2027 batch).
 
-**Live site:** https://raushanraj358.github.io/youriasbuddy/
+**Live site:** https://youriasbuddy.com
 
-No install and no build step. It's a static web app on GitHub Pages, with optional accounts and free AI powered by Supabase.
+No install and no build step. It's a static web app on GitHub Pages (custom domain), with optional accounts and free AI powered by Supabase.
 
 ## Features
 
@@ -28,7 +28,7 @@ to the user's account so it follows them across phone and laptop.
 
 | Piece | Service | Notes |
 |---|---|---|
-| Website | GitHub Pages | Every push to `main` publishes the site via `.github/workflows/jekyll-gh-pages.yml` |
+| Website | GitHub Pages + custom domain `youriasbuddy.com` | Every push to `main` publishes the site via `.github/workflows/jekyll-gh-pages.yml`. The domain is set in GitHub → repo **Settings → Pages → Custom domain** (no `CNAME` file needed with Actions deploys) |
 | Sign-in | Supabase Auth | Google sign-in (email magic link as a fallback) |
 | Cloud sync | Supabase Postgres | One row per user, protected by row-level security |
 | Free AI | Supabase Edge Function `ai` | Holds the Gemini key; GitHub Pages can't keep secrets or run server code |
@@ -59,7 +59,7 @@ Until this is done, the site still works in guest mode. AI only works for visito
    | `AI_DAILY_LIMIT` | `25` | Requests/day for signed-in users |
    | `AI_GUEST_DAILY_LIMIT` | `5` | Requests/day per IP for guests |
    | `GEMINI_MODEL` | `auto` | `auto` tries Flash, then falls back to Flash-Lite / 2.5 models |
-   | `ALLOWED_ORIGINS` | `https://raushanraj358.github.io,http://localhost:5173` | Sites allowed to call the function. Add your domain if you buy one |
+   | `ALLOWED_ORIGINS` | `https://youriasbuddy.com,https://www.youriasbuddy.com,https://raushanraj358.github.io,http://localhost:5173` | Sites allowed to call the function |
 
    If you change the limits, update `aiDailyLimit` / `aiGuestLimit` in `assets/js/config.js` too (they're only used for display).
 
@@ -67,11 +67,13 @@ Until this is done, the site still works in guest mode. AI only works for visito
 1. Google Cloud Console (https://console.cloud.google.com) → create a project → **Google Auth Platform / OAuth consent screen**:
    app name *YourIASBuddy*, user type **External**, your email as the contact. Then **Publish app**. It's free, and the basic
    email/profile scopes need no Google review.
-2. **Clients → Create client → Web application**. Under **Authorised redirect URIs**, add
-   `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase shows this exact URL in the next step).
+   On **Branding**, set the home page to `https://youriasbuddy.com` and add `youriasbuddy.com` and `<your-project-ref>.supabase.co`
+   under **Authorized domains**. Don't upload a logo, because that triggers Google's verification review.
+2. **Clients → Create client → Web application**. Under **Authorised JavaScript origins**, add `https://youriasbuddy.com`. Under
+   **Authorised redirect URIs**, add `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase shows this exact URL in the next step).
 3. Supabase → **Authentication → Sign In / Providers → Google** → enable it, paste the **Client ID** and **Client secret** → Save.
-4. Supabase → **Authentication → URL Configuration**: set **Site URL** to `https://raushanraj358.github.io/youriasbuddy/`, and add
-   that URL plus `http://localhost:5173/` under **Redirect URLs**.
+4. Supabase → **Authentication → URL Configuration**: set **Site URL** to `https://youriasbuddy.com/`, and add
+   `https://youriasbuddy.com/`, `https://www.youriasbuddy.com/` and `http://localhost:5173/` under **Redirect URLs**.
 
 ### 4. Connect the website
 1. Supabase → **Project Settings → API** (or the **Connect** button): copy the **Project URL** and the **anon / publishable** key.
