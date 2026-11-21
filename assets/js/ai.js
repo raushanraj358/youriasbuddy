@@ -2,7 +2,7 @@
 // (a Supabase Edge Function that holds the Gemini key and enforces a daily allowance per user / per guest).
 import { S } from './store.js';
 import { buildMessages } from './prompts.js';
-import { callAI } from './providers.js';
+import { callAI, ProviderError, AI_MESSAGES } from './providers.js';
 import { config, aiEndpoint } from './config.js';
 import { accessToken, cloud } from './cloud.js';
 import { dateKey } from './utils.js';
@@ -19,6 +19,27 @@ export function aiUsage() {
 }
 function saveUse(used, limit) {
   try { localStorage.setItem(USE_KEY, JSON.stringify({ date: dateKey(), who: cloud().user?.id || 'guest', used, limit })); } catch {}
+}
+
+const NETWORK_MSG = 'Could not reach the AI service. Check your internet connection and try again.';
+
+// Only our own, user-friendly server messages are shown as-is; anything else (e.g. raw provider text) becomes a standard message.
+const SAFE_SERVER_MSG = /^(You've used today's|Guests get|The free AI is busy|The AI couldn't answer|Could not compile today's current affairs|Current affairs need|News storage is not set up)/;
+function serverError(status, data) {
+  const msg = typeof data?.error === 'string' ? data.error : '';
+  if (msg && SAFE_SERVER_MSG.test(msg)) return new AIError(msg, status === 429 ? 'RATE' : 'API');
+  if (msg) console.warn(`[AI server ${status}]`, msg);
+  if (status === 429) return new AIError(AI_MESSAGES.RATE, 'RATE');
+  if (status === 404 || status === 501) return new AIError('The free AI is not available right now. You can add your own free Gemini key in Settings.', 'NO_KEY');
+  if (status === 400) return new AIError("That request couldn't be processed. Please check what you entered and try again.", 'API');
+  return new AIError(AI_MESSAGES.API, 'API');
+}
+
+/** A message that is always safe to show people: ours if we wrote it, otherwise a standard one. */
+export function friendlyError(e) {
+  if (e instanceof AIError || e instanceof ProviderError) return e.message;
+  if (e) console.warn('[error]', e);
+  return AI_MESSAGES.API;
 }
 
 export class AIError extends Error {
@@ -59,7 +80,9 @@ export async function runAI(task, params, { signal } = {}) {
       content = await callAI({ provider, key, model, messages: buildMessages(task, params), signal });
     } catch (e) {
       if (e.name === 'AbortError') throw e;
-      throw new AIError(e.message, e.code || 'API');
+      if (e instanceof ProviderError) throw new AIError(e.message, e.code || 'API');
+      console.warn('[AI]', e);
+      throw new AIError(NETWORK_MSG, 'API');
     }
   } else {
     if (!config().serverAI) throw new AIError('AI is not set up on this site yet. Add your free Gemini API key in Settings (takes 1 minute).', 'NO_KEY');
@@ -74,14 +97,11 @@ export async function runAI(task, params, { signal } = {}) {
       });
     } catch (e) {
       if (e.name === 'AbortError') throw e;
-      throw new AIError('Could not reach the AI server. Check your connection and try again.', 'API');
+      throw new AIError(NETWORK_MSG, 'API');
     }
     const data = await res.json().catch(() => null);
     if (data && Number.isFinite(data.used)) saveUse(data.used, data.limit);
-    if (!res.ok || !data) {
-      if (res.status === 404 || !data) throw new AIError('The free AI is not available right now. You can add your own free Gemini key in Settings.', 'NO_KEY');
-      throw new AIError(data.error || `AI server error (${res.status})`, res.status === 429 ? 'RATE' : 'API');
-    }
+    if (!res.ok || !data) throw serverError(res.ok ? 502 : res.status, data);
     content = data.content;
   }
   return parseJSON(content);
@@ -145,10 +165,14 @@ export async function fetchNews(day = '', { signal } = {}) {
     });
   } catch (e) {
     if (e.name === 'AbortError') throw e;
-    throw new AIError('Could not reach the server. Check your connection and try again.', 'API');
+    throw new AIError(NETWORK_MSG, 'API');
   }
   const data = await res.json().catch(() => null);
-  if (!res.ok || !data) throw new AIError(data?.error || `Server error (${res.status})`, 'API');
+  if (!res.ok || !data) throw serverError(res.ok ? 502 : res.status, data);
+  if (data.status === 'failed' && data.error && !SAFE_SERVER_MSG.test(data.error)) {
+    console.warn('[news]', data.error);
+    data.error = "Could not compile today's current affairs right now. Please try again in a few minutes.";
+  }
   if (data.status === 'ready') cacheNews(data);
   return data;
 }

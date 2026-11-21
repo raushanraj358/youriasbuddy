@@ -3,7 +3,7 @@ import { icon } from '../icons.js';
 import { esc, download, dateKey } from '../utils.js';
 import { toast, confirmDialog } from '../ui.js';
 import { cloud } from '../cloud.js';
-import { runAI, cleanMCQs, aiUsage } from '../ai.js';
+import { runAI, cleanMCQs, aiUsage, friendlyError } from '../ai.js';
 import { config } from '../config.js';
 import { listGeminiModels, GEMINI_AUTO_CHAIN } from '../providers.js';
 
@@ -109,7 +109,7 @@ export function mount(el) {
         draw();
         toast(`Found ${geminiModels.length} models`, 'good');
       } catch (err) {
-        toast(err.message, 'bad');
+        toast(friendlyError(err), 'bad');
         b.disabled = false;
       }
     }
@@ -125,7 +125,7 @@ export function mount(el) {
         el.querySelector('#testOut').innerHTML = `<div class="notice info" style="background:var(--good-soft);border-color:transparent">${icon('check', 18)}<div><b>Connected! AI quizzes are ready.</b><br>Sample: “${esc(res[0]?.stem || 'OK')}”</div></div>`;
         return;
       } catch (err) {
-        out.innerHTML = `<div class="notice">${icon('alert', 18)}<div>${esc(err.message)}</div></div>`;
+        out.innerHTML = `<div class="notice">${icon('alert', 18)}<div>${esc(friendlyError(err))}</div></div>`;
       }
       b.disabled = false;
     } else if (d.theme) {

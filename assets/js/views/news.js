@@ -3,7 +3,7 @@ import { S, commit } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, uid, dateKey, addDays, fmtDate } from '../utils.js';
 import { subjectById, VISION_IAS } from '../data.js';
-import { fetchNews, cachedNews } from '../ai.js';
+import { fetchNews, cachedNews, friendlyError } from '../ai.js';
 import { config } from '../config.js';
 import { toast } from '../ui.js';
 
@@ -97,7 +97,7 @@ export function mount(el, params, { setSub }) {
       if (res.status === 'generating' && polls++ < 25) pollTimer = setTimeout(() => load({ quiet: true }), 8000);
     } catch (e) {
       if (e.name === 'AbortError' || !el.isConnected) return;
-      if (state.status !== 'ready') state = { status: 'error', error: e.message, days: state.days || [] };
+      if (state.status !== 'ready') state = { status: 'error', error: friendlyError(e), days: state.days || [] };
     }
     draw();
   }

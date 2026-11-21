@@ -35,6 +35,8 @@ function load() {
       if (MERGE_KEYS.includes(k) && s[k] && typeof s[k] === 'object') d[k] = { ...d[k], ...s[k] };
       else d[k] = s[k];
     }
+    // Google retired the 2.5 models; move anyone who picked one back to Auto.
+    if (/^gemini-2\./.test(d.settings.geminiModel || '')) d.settings.geminiModel = 'auto';
     return d;
   } catch {
     return d;

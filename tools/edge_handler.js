@@ -92,8 +92,9 @@ async function generateDigest(key, day) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      last = new Error(data?.error?.message || `Gemini error (${res.status})`);
-      if ([404, 429].includes(res.status) || res.status >= 500) continue;
+      last = new Error(`${m} ${res.status}: ${data?.error?.message || ''}`);
+      console.warn('[news]', last.message);
+      if (isModelUnavailable(res.status, data?.error?.message) || res.status === 429 || res.status >= 500) continue;
       throw last;
     }
     const cand = data?.candidates?.[0];
@@ -209,7 +210,9 @@ Deno.serve(async (req) => {
     const content = await callAI({ provider, key, model, messages });
     return reply(200, { content, used, limit });
   } catch (e) {
-    if (e.code === 'RATE') return reply(429, { used, limit, error: 'The free AI is busy right now (shared limit reached). Please try again in a few minutes, or add your own free Gemini key in Settings.' });
-    return reply(502, { used, limit, error: e.code === 'AUTH' ? 'The server AI key is invalid.' : e.message || 'AI provider error' });
+    if (e.code === 'RATE') return reply(429, { used, limit, error: 'The free AI is busy right now. Please try again in a few minutes, or add your own free Gemini key in Settings.' });
+    if (e.code === 'BLOCKED') return reply(422, { used, limit, error: AI_MESSAGES.BLOCKED });
+    console.error('AI call failed', e.code, e.message);
+    return reply(502, { used, limit, error: AI_MESSAGES.API });
   }
 });

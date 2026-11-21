@@ -63,7 +63,7 @@ export async function initCloud() {
   const err = url.searchParams.get('error_description');
   const { data } = await sb.auth.getSession(); // also finishes a sign-in redirect (?code=…)
   if (fromRedirect || err) history.replaceState(null, '', location.pathname + location.hash);
-  if (err) toast('Sign-in failed', 'bad', err);
+  if (err) toast('Sign-in failed', 'bad', authErrorMessage(err));
 
   user = data?.session?.user || null;
   setStatus(user ? 'syncing' : 'signed-out');
@@ -261,6 +261,16 @@ function choose(row, kind) {
 }
 
 /* ---------------- Account actions ---------------- */
+
+/** Standard wording for sign-in/account errors (raw Supabase text goes to the console only). */
+export function authErrorMessage(e) {
+  const raw = String(e?.message || e || '');
+  if (raw) console.warn('[auth]', raw);
+  if (/rate limit|too many|security purposes/i.test(raw)) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (/invalid.*email|email.*invalid|unable to validate email/i.test(raw)) return 'Please enter a valid email address.';
+  if (/fetch|network|load failed/i.test(raw)) return 'Could not connect. Check your internet connection and try again.';
+  return 'Something went wrong. Please try again.';
+}
 
 /** The signed-in user's access token (refreshed if needed), or null for guests. */
 export async function accessToken() {

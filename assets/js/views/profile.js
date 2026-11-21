@@ -4,7 +4,7 @@ import { icon } from '../icons.js';
 import { esc, dateKey, fmtMin, fmtHours, fmtDate, timeAgo } from '../utils.js';
 import { toast, hbars, confirmDialog } from '../ui.js';
 import { subjectById, SUBJECTS, SYLLABUS } from '../data.js';
-import { cloud, onCloudChange, signInWithEmail, signInWithGoogle, signOut, sync, deleteCloudData } from '../cloud.js';
+import { cloud, onCloudChange, signInWithEmail, signInWithGoogle, signOut, sync, deleteCloudData, authErrorMessage } from '../cloud.js';
 
 const STATUS = {
   pending: ['Saving…', 'var(--muted)'],
@@ -176,7 +176,7 @@ export function mount(el) {
         sentTo = email;
         draw();
       } catch (err) {
-        toast(err.message || 'Could not send the link', 'bad');
+        toast(authErrorMessage(err), 'bad');
         btn.disabled = false;
       }
     }
@@ -198,7 +198,7 @@ export function mount(el) {
         }
       }
     } catch (err) {
-      toast(err.message || 'Something went wrong', 'bad');
+      toast(authErrorMessage(err), 'bad');
     }
   });
 

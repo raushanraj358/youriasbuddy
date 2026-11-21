@@ -2,7 +2,7 @@ import { S, commit } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, uid, fmtClock, shuffle, wordCount, timeAgo, dateKey, addDays } from '../utils.js';
 import { SUBJECTS, SYLLABUS, SAMPLE_QUIZ, subjectById } from '../data.js';
-import { runAI, cleanMCQs, hasAI } from '../ai.js';
+import { runAI, cleanMCQs, hasAI, friendlyError, AIError } from '../ai.js';
 import { toast, hbars, emptyState, ring } from '../ui.js';
 import { cachedNews } from '../ai.js';
 import { digestToMarkdown } from './news.js';
@@ -184,18 +184,18 @@ export function mount(el, params) {
           directive: String(q.directive || ''), demand: String(q.demand || ''), keywords: Array.isArray(q.keywords) ? q.keywords.map(String) : [],
           framework: q.framework || {}, answer: '', feedback: null, showFw: false,
         }));
-        if (!qs.length) throw new Error('No questions were generated. Please try again.');
+        if (!qs.length) throw new AIError('No questions were generated. Please try again.', 'EMPTY');
         session = { kind: 'mains', id: uid(), questions: qs, startedAt: Date.now(), meta: { ...cfg } };
         phase = 'mains';
       } else {
         const qs = cleanMCQs(res);
-        if (!qs.length) throw new Error('The AI response had no valid questions. Please try again.');
+        if (!qs.length) throw new AIError('The AI response had no valid questions. Please try again.', 'EMPTY');
         startMCQ(qs, false);
       }
     } catch (e) {
       if (e.name === 'AbortError') phase = 'setup';
       else {
-        lastError = e;
+        lastError = { message: friendlyError(e), code: e.code };
         phase = 'setup';
       }
     } finally {
@@ -409,7 +409,7 @@ export function mount(el, params) {
       const fb = await runAI('evaluate', { question: q.question, marks: q.marks, wordLimit: q.wordLimit, answer: q.answer, language: session.meta.language, subject: session.meta.subject });
       q.feedback = { ...fb, score: Number(fb.score) || 0, outOf: Number(fb.outOf) || q.marks };
     } catch (e) {
-      q.evalError = e.message;
+      q.evalError = friendlyError(e);
     }
     q.evaluating = false;
     if (phase === 'mains') draw();

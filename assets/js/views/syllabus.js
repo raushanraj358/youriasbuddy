@@ -3,7 +3,7 @@ import { S, commit } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, uid, dateKey, addDays, timeAgo } from '../utils.js';
 import { SUBJECTS, SYLLABUS, LIBRARY, subjectById } from '../data.js';
-import { runAI, hasAI } from '../ai.js';
+import { runAI, hasAI, friendlyError, AIError } from '../ai.js';
 import { toast, confirmDialog } from '../ui.js';
 import { md } from '../md.js';
 
@@ -104,14 +104,14 @@ async function generate(sub, topic, language) {
     const s = subjectById(sub);
     const raw = await runAI('material', { subject: s.name, paper: s.paper, topic, language }, { signal: controller.signal });
     const data = clean(raw);
-    if (!data.overview && !data.sections.length) throw new Error('The AI returned empty notes. Please try again.');
+    if (!data.overview && !data.sections.length) throw new AIError('The AI returned empty notes. Please try again.', 'EMPTY');
     syl().material[key] = { data, at: Date.now(), lang: language };
     if (!syl().status[key]) syl().status[key] = 'reading';
     commit();
     if (!location.hash.includes(encodeURIComponent(topic))) toast('Study notes ready', 'good', topic);
   } catch (e) {
     if (e.name !== 'AbortError') {
-      lastError = { key, message: e.message || 'Could not generate notes', code: e.code };
+      lastError = { key, message: friendlyError(e), code: e.code };
       if (!location.hash.includes(encodeURIComponent(topic))) toast(lastError.message, 'bad');
     }
   } finally {
