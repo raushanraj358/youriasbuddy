@@ -56,7 +56,7 @@ export function mount(el) {
       <div class="row" style="gap:14px;margin-bottom:14px">
         ${avatar ? `<img src="${esc(avatar)}" alt="" width="52" height="52" referrerpolicy="no-referrer" style="border-radius:50%">` : `<div class="avatar lg">${esc(name[0].toUpperCase())}</div>`}
         <div style="min-width:0"><b style="font-size:17px">${esc(name)}</b><div class="hint" style="overflow-wrap:anywhere">${esc(u.email || '')}</div>
-        <div class="hint">Member since ${fmtDate(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
+        ${fmtDate(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' }) ? `<div class="hint">Member since ${fmtDate(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}</div>` : ''}</div>
       </div>
       <p class="hint" style="color:${color};margin-bottom:12px">${icon(c.status === 'synced' ? 'check' : 'cloud', 14)} ${label}${c.status === 'synced' && c.lastSyncAt ? ` · ${timeAgo(c.lastSyncAt)}` : ''}</p>
       <div class="row wrap">

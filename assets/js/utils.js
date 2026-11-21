@@ -56,8 +56,9 @@ export function fmtClock(ms) {
   return h ? `${p(h)}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
 }
 export function fmtDate(d, opts = { day: 'numeric', month: 'short' }) {
-  const x = typeof d === 'string' ? parseKey(d) : new Date(d);
-  return x.toLocaleDateString('en-IN', opts);
+  // 'YYYY-MM-DD' keys are local dates; anything else (ISO timestamps, epoch ms, Date) goes through Date.
+  const x = typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? parseKey(d) : new Date(d);
+  return Number.isNaN(x.getTime()) ? '' : x.toLocaleDateString('en-IN', opts);
 }
 export function fmtTime12(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);
