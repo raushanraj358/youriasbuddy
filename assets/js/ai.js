@@ -1,6 +1,7 @@
-// AI client. Uses the user's own OpenAI key (Settings) if present, otherwise the /api/ai serverless proxy.
+// AI client. Uses the key saved in Settings (Gemini or OpenAI) if present, otherwise the /api/ai serverless proxy.
 import { S } from './store.js';
 import { buildMessages } from './prompts.js';
+import { callAI } from './providers.js';
 
 export class AIError extends Error {
   constructor(msg, code) {
@@ -16,45 +17,44 @@ function parseJSON(text) {
     return JSON.parse(cleaned);
   } catch {
     const m = cleaned.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
+    if (m) {
+      try { return JSON.parse(m[0]); } catch {}
+    }
     throw new AIError('The AI returned an unreadable response. Please try again.', 'PARSE');
   }
 }
 
+export function activeAI() {
+  const s = S().settings;
+  const provider = s.provider === 'openai' ? 'openai' : 'gemini';
+  return provider === 'openai'
+    ? { provider, key: s.apiKey, model: s.model || 'gpt-4o-mini' }
+    : { provider, key: s.geminiKey, model: s.geminiModel || 'auto' };
+}
+
 export async function runAI(task, params, { signal } = {}) {
-  const { apiKey, model } = S().settings;
+  const { provider, key, model } = activeAI();
   let content;
 
-  if (apiKey) {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: model || 'gpt-4o-mini', messages: buildMessages(task, params), response_format: { type: 'json_object' } }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = data?.error?.message || `OpenAI error (${res.status})`;
-      throw new AIError(res.status === 401 ? 'Your OpenAI API key was rejected. Check it in Settings.' : msg, res.status === 401 ? 'AUTH' : 'API');
+  if (key) {
+    try {
+      content = await callAI({ provider, key, model, messages: buildMessages(task, params), signal });
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      throw new AIError(e.message, e.code || 'API');
     }
-    content = data?.choices?.[0]?.message?.content;
   } else {
     let res;
     try {
-      res = await fetch('/api/ai', {
-        method: 'POST',
-        signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task, params }),
-      });
+      res = await fetch('/api/ai', { method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, params }) });
     } catch (e) {
       if (e.name === 'AbortError') throw e;
       throw new AIError('Could not reach the AI server.', 'NO_KEY');
     }
     const data = await res.json().catch(() => null);
     if (!res.ok || !data) {
-      if ([404, 405, 501].includes(res.status) || !data) throw new AIError('AI is not configured yet. Add your OpenAI API key in Settings.', 'NO_KEY');
-      throw new AIError(data.error || `AI server error (${res.status})`, 'API');
+      if ([404, 405, 501].includes(res.status) || !data) throw new AIError('AI is not set up yet. Add your free Gemini API key in Settings (takes 1 minute).', 'NO_KEY');
+      throw new AIError(data.error || `AI server error (${res.status})`, res.status === 429 ? 'RATE' : 'API');
     }
     content = data.content;
   }
@@ -62,12 +62,13 @@ export async function runAI(task, params, { signal } = {}) {
 }
 
 export function hasAI() {
-  return Boolean(S().settings.apiKey) || location.protocol === 'https:';
+  const s = S().settings;
+  return Boolean(s.geminiKey || s.apiKey) || location.protocol === 'https:';
 }
 
 /** Normalise & validate MCQs coming back from the model. */
 export function cleanMCQs(raw) {
-  const list = Array.isArray(raw?.questions) ? raw.questions : [];
+  const list = Array.isArray(raw?.questions) ? raw.questions : Array.isArray(raw) ? raw : [];
   return list
     .map((q) => ({
       passage: String(q.passage || ''),

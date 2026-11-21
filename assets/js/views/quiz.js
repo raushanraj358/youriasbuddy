@@ -80,8 +80,8 @@ export function mount(el, params) {
             : `<details ${cfg.context ? 'open' : ''}><summary class="label" style="cursor:pointer">Paste study material to quiz from (optional)</summary>
               <textarea class="textarea" id="qContext" rows="4" style="margin-top:8px" placeholder="Paste an editorial, PIB release or your notes — questions will be grounded in it.">${esc(cfg.context)}</textarea></details>`}
 
-          ${lastError ? `<div class="notice">${icon('alert', 18)}<div style="flex:1">${esc(lastError.message)}${lastError.code === 'NO_KEY' || lastError.code === 'AUTH' ? ` <a href="#/settings" style="font-weight:700">Open Settings →</a>` : ''}</div></div>`
-            : !aiReady ? `<div class="notice info">${icon('key', 18)}<div style="flex:1">To generate fresh questions on any topic, add your OpenAI API key in <a href="#/settings" style="font-weight:700">Settings</a>. Meanwhile, try the offline sample quiz.</div></div>` : ''}
+          ${lastError ? `<div class="notice">${icon('alert', 18)}<div style="flex:1">${esc(lastError.message)}${['NO_KEY', 'AUTH', 'MODEL', 'RATE'].includes(lastError.code) ? ` <a href="#/settings" style="font-weight:700">Open Settings →</a>` : ''}</div></div>`
+            : !aiReady ? `<div class="notice info">${icon('key', 18)}<div style="flex:1">To generate fresh questions on any topic, add a <b>free Google Gemini key</b> in <a href="#/settings" style="font-weight:700">Settings</a> (takes 1 minute). Meanwhile, try the offline sample quiz.</div></div>` : ''}
 
           <div class="row wrap">
             <button class="btn accent lg" data-generate>${icon('sparkles', 17)} Generate ${cfg.mode === 'mains' ? 'Mains questions' : 'quiz'}</button>

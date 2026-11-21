@@ -8,7 +8,7 @@ function defaults() {
   return {
     v: 1,
     profile: { name: '', examDate: '2027-05-23', startDate: dateKey(), dailyTarget: 8, onboarded: false },
-    settings: { theme: 'system', apiKey: '', model: 'gpt-4o-mini', pomoFocus: 25, pomoBreak: 5, sound: true },
+    settings: { theme: 'system', provider: 'gemini', geminiKey: '', geminiModel: 'auto', apiKey: '', model: 'gpt-4o-mini', pomoFocus: 25, pomoBreak: 5, sound: true },
     tasks: {}, // { 'YYYY-MM-DD': [{id,title,subject,mins,done,priority}] }
     journal: {}, // { 'YYYY-MM-DD': 'text' }
     habits: { defs: HABITS.map((h) => ({ ...h })), log: {} }, // log: { date: [habitIds] }
@@ -68,6 +68,7 @@ export function resetAll() {
 export function exportJSON() {
   const copy = JSON.parse(JSON.stringify(state));
   copy.settings.apiKey = ''; // never export secrets
+  copy.settings.geminiKey = '';
   copy.exportedAt = new Date().toISOString();
   return JSON.stringify(copy, null, 2);
 }

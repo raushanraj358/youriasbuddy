@@ -1,7 +1,8 @@
 // Vercel serverless function: POST /api/ai
-// Keeps OPENAI_API_KEY on the server. Prompts are built server-side from a fixed whitelist of tasks,
+// Keeps GEMINI_API_KEY (free) or OPENAI_API_KEY on the server. Prompts are built server-side from a fixed whitelist of tasks,
 // so this endpoint cannot be used as a general-purpose OpenAI proxy.
 import { buildMessages } from '../assets/js/prompts.js';
+import { callAI } from '../assets/js/providers.js';
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_PER_WINDOW = Number(process.env.AI_RATE_LIMIT_PER_HOUR || 40);
@@ -17,8 +18,11 @@ function limited(ip) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return res.status(501).json({ error: 'Server AI is not configured' });
+  // Prefer free Gemini when configured; fall back to OpenAI.
+  const provider = process.env.GEMINI_API_KEY ? 'gemini' : process.env.OPENAI_API_KEY ? 'openai' : null;
+  if (!provider) return res.status(501).json({ error: 'Server AI is not configured' });
+  const key = provider === 'gemini' ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY;
+  const model = provider === 'gemini' ? process.env.GEMINI_MODEL || 'auto' : process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'anon';
   if (limited(ip)) return res.status(429).json({ error: 'Too many AI requests. Please try again in a while.' });
@@ -37,19 +41,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-        messages,
-        response_format: { type: 'json_object' },
-      }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) return res.status(502).json({ error: data?.error?.message || 'Upstream AI error' });
-    return res.status(200).json({ content: data?.choices?.[0]?.message?.content || '' });
+    const content = await callAI({ provider, key, model, messages });
+    return res.status(200).json({ content });
   } catch (e) {
-    return res.status(502).json({ error: 'Could not reach OpenAI' });
+    const status = e.code === 'RATE' ? 429 : 502;
+    return res.status(status).json({ error: e.code === 'AUTH' ? 'The server AI key is invalid.' : e.message || 'AI provider error' });
   }
 }
