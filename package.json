@@ -1,0 +1,8 @@
+{
+  "name": "youriasbuddy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "YourIASBuddy — UPSC CSE study companion (static site + one serverless AI function)",
+  "engines": { "node": ">=18" }
+}

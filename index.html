@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>YourIASBuddy — UPSC Study Companion</title>
+  <meta name="description" content="YourIASBuddy: daily tracker, study-hours timer, reminders, notes, curated resources and AI-powered UPSC Prelims & Mains quizzes." />
+  <meta name="theme-color" content="#14161d" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <script>
+    // Apply theme before paint to avoid a flash.
+    try {
+      var s = JSON.parse(localStorage.getItem('yib:v1') || '{}');
+      var t = (s.settings && s.settings.theme) || 'system';
+      if (t !== 'system') document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#/dashboard" aria-label="YourIASBuddy home">
+        <img src="assets/img/logo.svg" alt="" width="34" height="34" />
+        <span class="brand-name">youriasbuddy<span>.com</span></span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Main"></nav>
+      <div class="sidebar-foot">
+        <div class="countdown-card" id="countdownCard"></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSub" class="muted"></p>
+        </div>
+        <div class="topbar-actions">
+          <a class="timer-chip" id="timerChip" href="#/study" hidden></a>
+          <a class="icon-btn mobile-only" href="#/reminders" id="remBtn" title="Reminders" aria-label="Reminders"></a>
+          <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
+          <a class="icon-btn" href="#/settings" title="Settings" aria-label="Settings" id="settingsBtn"></a>
+        </div>
+      </header>
+      <main id="view" class="view" tabindex="-1"></main>
+    </div>
+
+    <nav class="tabbar" id="tabbar" aria-label="Mobile"></nav>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="modalRoot"></div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
