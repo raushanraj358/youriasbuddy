@@ -123,7 +123,9 @@ p { margin: 0; }
   display: flex; flex-direction: column; padding: 22px 14px 18px;
   overflow-y: auto;
 }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 0 8px 22px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 0 0 22px; }
+.brand-plate { display: block; width: 100%; background: #fff; border-radius: 12px; padding: 10px 12px; }
+.brand-plate img { display: block; width: 100%; height: auto; }
 .brand-name { font-weight: 800; letter-spacing: -.02em; font-size: 17px; color: #fff; }
 .brand-name span { color: var(--sidebar-muted); font-weight: 600; }
 .nav { display: flex; flex-direction: column; gap: 2px; }
@@ -598,7 +600,7 @@ p { margin: 0; }
 
 /* ---------- Onboarding ---------- */
 .onboard-hero { text-align: center; padding: 8px 0 4px; }
-.onboard-hero img { width: 56px; height: 56px; margin-bottom: 10px; }
+.onboard-hero img { width: min(320px, 85%); height: auto; margin: 4px 0 18px; }
 .onboard-hero h3 { font-family: var(--serif); font-weight: 400; font-size: 32px; }
 
 /* ---------- Responsive ---------- */
@@ -707,7 +709,8 @@ p { margin: 0; }
 /* ---------- Legal pages (privacy.html, terms.html) ---------- */
 .legal-page { min-height: 100vh; display: flex; flex-direction: column; }
 .legal-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 820px; width: 100%; margin: 0 auto; padding: 22px 20px 6px; }
-.legal-top .brand { padding: 0; }
+.legal-top .brand { padding: 0; width: 230px; }
+.legal-top .brand-plate { border: 1px solid var(--line); }
 .legal-top .brand-name { color: var(--ink); }
 .legal-top .brand-name span { color: var(--muted); }
 .legal { max-width: 820px; width: 100%; margin: 0 auto; padding: 18px 20px 40px; }

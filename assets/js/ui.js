@@ -97,7 +97,7 @@ export function notify(title, body = '') {
   toast(title, 'remind', body);
   try {
     if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
-      new Notification(title, { body, icon: 'assets/img/logo.svg', tag: title });
+      new Notification(title, { body, icon: 'assets/img/icon-192.png', tag: title });
     }
   } catch {}
 }

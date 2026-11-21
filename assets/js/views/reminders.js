@@ -127,7 +127,7 @@ export function mount(el) {
       }
     } else if ('perm' in d) { await Notification.requestPermission(); draw(); }
     else if ('test' in d) {
-      if ('Notification' in window && Notification.permission === 'granted') new Notification('YourIASBuddy', { body: 'Notifications are working 🎉', icon: 'assets/img/logo.svg' });
+      if ('Notification' in window && Notification.permission === 'granted') new Notification('YourIASBuddy', { body: 'Notifications are working 🎉', icon: 'assets/img/icon-192.png' });
       notify('This is how reminders look', 'You will hear a soft chime too.');
     }
   });
