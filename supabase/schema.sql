@@ -11,6 +11,11 @@ create table if not exists public.user_data (
 
 alter table public.user_data enable row level security;
 
+-- Table access for the website's API. Newer Supabase projects don't grant this automatically.
+-- Signed-in users may touch only their own row (policies below); guests get no access at all.
+grant select, insert, update, delete on public.user_data to authenticated;
+revoke all on public.user_data from anon;
+
 drop policy if exists "user_data select own" on public.user_data;
 drop policy if exists "user_data insert own" on public.user_data;
 drop policy if exists "user_data update own" on public.user_data;

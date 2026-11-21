@@ -3,9 +3,9 @@
 // and the Gemini key stays secret inside the Supabase Edge Function (supabase/functions/ai).
 const SITE = {
   // Supabase → Project Settings → API (or "Connect"): Project URL, e.g. 'https://abcdefghijkl.supabase.co'
-  supabaseUrl: '',
+  supabaseUrl: 'https://cuwquhesnspfcofhuxvq.supabase.co',
   // Supabase → Project Settings → API Keys: the "anon" / "publishable" key (NOT the service_role / secret key)
-  supabaseAnonKey: '',
+  supabaseAnonKey: 'sb_publishable_5dY8NUhMPxNllhcbuZXzIQ_X3LCHZqC',
 
   googleAuth: true, // "Continue with Google" (enable the Google provider in Supabase first)
   emailAuth: true, // "Email me a sign-in link" as a fallback
