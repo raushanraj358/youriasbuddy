@@ -2,7 +2,7 @@
 import { S, commit } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, uid, dateKey, addDays, fmtDate } from '../utils.js';
-import { subjectById } from '../data.js';
+import { subjectById, VISION_IAS } from '../data.js';
 import { fetchNews, cachedNews } from '../ai.js';
 import { config } from '../config.js';
 import { toast } from '../ui.js';
@@ -21,11 +21,33 @@ const CATEGORY_SUBJECT = {
 };
 const LOADING_LINES = ['Searching Google for today\'s news…', 'Reading PIB, courts and Parliament updates…', 'Picking what matters for UPSC…', 'Linking news to the static syllabus…', 'Writing Prelims facts and Mains angles…', 'Explaining key terms…'];
 const FALLBACK_LINKS = [
+  ['Vision IAS · News Today', VISION_IAS.newsToday],
+  ['Vision IAS · Daily News Summary', VISION_IAS.dailySummary],
   ['Indian Express · UPSC Essentials', 'https://indianexpress.com/section/upsc-current-affairs/'],
   ['Press Information Bureau', 'https://pib.gov.in'],
   ['The Hindu', 'https://www.thehindu.com'],
   ['PRS Legislative Research', 'https://prsindia.org'],
 ];
+
+/** Switch between the daily digest and the monthly magazines (shown on both pages; works on mobile too). */
+export function caTabs(active) {
+  return `<div class="seg ca-tabs" role="tablist">
+    <a role="tab" href="#/news" class="${active === 'news' ? 'on' : ''}">${icon('globe', 15)} Daily news</a>
+    <a role="tab" href="#/magazines" class="${active === 'magazines' ? 'on' : ''}">${icon('book', 15)} Magazines</a>
+  </div>`;
+}
+
+function visionCard() {
+  return `<div class="card vision-card">
+    <div class="card-head"><h3>${icon('star', 17)} Vision IAS daily</h3></div>
+    <p class="hint" style="margin-bottom:12px">Important news for UPSC, every day, from Vision IAS.</p>
+    <div class="stack" style="gap:8px">
+      <a class="btn block" href="${VISION_IAS.newsToday}" target="_blank" rel="noopener">${icon('external', 14)} News Today</a>
+      <a class="btn block" href="${VISION_IAS.dailySummary}" target="_blank" rel="noopener">${icon('external', 14)} Daily News Summary</a>
+      <a class="btn ghost block" href="#/magazines">${icon('book', 14)} Monthly magazines</a>
+    </div>
+  </div>`;
+}
 
 export const istToday = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 const longDate = (d) => fmtDate(d, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -140,6 +162,7 @@ export function mount(el, params, { setSub }) {
         </article>`).join('')}
       </div>
       <div class="stack">
+        ${visionCard()}
         ${d.essentials.length ? `<div class="card">
           <div class="card-head"><h3>${icon('bulb', 17)} UPSC Essentials</h3></div>
           <p class="hint" style="margin-bottom:10px">Key terms in today's news</p>
@@ -176,7 +199,7 @@ export function mount(el, params, { setSub }) {
         ${(state.days || []).length ? nav() : ''}
         <p class="hint" style="margin-top:16px">Meanwhile, read today's news from these sources:</p>${fallbackLinks()}</div>`;
     }
-    el.innerHTML = html;
+    el.innerHTML = caTabs('news') + html;
 
     const frame = el.querySelector('.search-suggest');
     if (frame) {

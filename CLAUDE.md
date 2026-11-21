@@ -80,6 +80,9 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
 - Keep rendering Google's `searchEntryPoint.renderedContent` (the Search Suggestions box) in the sandboxed iframe; Google's grounding terms require it.
 - Digests are cached per device in localStorage `yib:news` (last 10 days), separate from synced user data. Quiz reads them via `#/quiz?news=YYYY-MM-DD`.
 
+- External Vision IAS links live in `VISION_IAS` in data.js. Monthly issues use `…/monthly-magazine/archive?year=Y&month=M`
+  (month = issue month; verified Nov 2026). Their article URLs aren't stable, so never deep-link to them. Read state: `S().magazines.read`.
+
 ### Database (`supabase/schema.sql`)
 - Must stay idempotent (safe to re-run). RLS on every table; `ai_usage` intentionally has no policies (service role only).
 

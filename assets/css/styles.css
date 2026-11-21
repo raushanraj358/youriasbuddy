@@ -755,3 +755,21 @@ p { margin: 0; }
 .essential p { font-size: 13.5px; color: var(--ink-2); line-height: 1.6; margin-top: 2px; }
 .search-suggest { width: 100%; height: 90px; border: 0; margin-top: 12px; border-radius: 12px; background: transparent; }
 @media (max-width: 560px) { .news-hero h2 { font-size: 24px; } .tabbar a { font-size: 9.5px; } }
+
+/* ---------- Current affairs tabs & magazines ---------- */
+.ca-tabs { margin-bottom: 16px; }
+.ca-tabs a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--muted); text-decoration: none; }
+.ca-tabs a.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.vision-card { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.mag-hero { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; }
+.mag-hero h2 { font-size: 30px; margin: 4px 0 6px; }
+.mag-progress { flex: 0 1 220px; }
+.mag-progress .v { font-family: var(--serif); font-size: 44px; line-height: 1; }
+.mag-progress .v small { font-family: var(--font); font-size: 15px; color: var(--muted); margin-left: 4px; }
+.mag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.mag-card { display: flex; flex-direction: column; gap: 8px; min-height: 168px; padding: 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); }
+.mag-card h4 { font-family: var(--serif); font-weight: 400; font-size: 26px; }
+.mag-card.read { background: var(--surface-2); }
+.mag-card.read h4 { color: var(--muted); }
+@media (max-width: 560px) { .mag-hero h2 { font-size: 24px; } .mag-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .mag-card { padding: 12px; } .mag-card h4 { font-size: 21px; } }
+a.chip { text-decoration: none; }

@@ -20,10 +20,11 @@ function defaults() {
     library: {}, // curated id -> 'todo' | 'doing' | 'done'
     quizzes: [],
     syllabus: { status: {}, material: {}, custom: {} }, // keys are 'subjectId::topic'
+    magazines: { read: {} }, // read: { 'vision:YYYY-MM': true }
   };
 }
 
-const MERGE_KEYS = ['profile', 'settings', 'habits', 'syllabus'];
+const MERGE_KEYS = ['profile', 'settings', 'habits', 'syllabus', 'magazines'];
 function load() {
   const d = defaults();
   try {
@@ -59,7 +60,7 @@ export function commit() {
 }
 export function replaceAll(next) {
   const d = defaults();
-  state = { ...d, ...next, profile: { ...d.profile, ...(next.profile || {}) }, settings: { ...d.settings, ...(next.settings || {}) }, syllabus: { ...d.syllabus, ...(next.syllabus || {}) } };
+  state = { ...d, ...next, profile: { ...d.profile, ...(next.profile || {}) }, settings: { ...d.settings, ...(next.settings || {}) }, syllabus: { ...d.syllabus, ...(next.syllabus || {}) }, magazines: { ...d.magazines, ...(next.magazines || {}) } };
   commit();
 }
 export function resetAll() {
