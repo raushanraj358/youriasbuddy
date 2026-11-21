@@ -16,6 +16,7 @@ import * as reminders from './views/reminders.js';
 import * as settings from './views/settings.js';
 import * as profile from './views/profile.js';
 import * as syllabus from './views/syllabus.js';
+import * as news from './views/news.js';
 import { initCloud, cloud, onCloudChange } from './cloud.js';
 
 const ROUTES = {
@@ -23,6 +24,7 @@ const ROUTES = {
   tracker: { title: 'Daily Tracker', icon: 'tracker', view: tracker, group: 'Plan', tab: 'Tracker', sub: 'Plan the day, build habits, review consistency' },
   study: { title: 'Study Hours', icon: 'timer', view: study, group: 'Plan', tab: 'Timer', sub: 'Focus timer, logs and analytics' },
   reminders: { title: 'Reminders', icon: 'bell', view: reminders, group: 'Plan', sub: 'Never miss your routine' },
+  news: { title: 'Current Affairs', icon: 'globe', view: news, group: 'Learn', tab: 'News', sub: 'Today\'s UPSC-relevant news, explained' },
   syllabus: { title: 'Study Material', icon: 'book', view: syllabus, group: 'Learn', tab: 'Study', sub: 'The UPSC CSE syllabus, topic by topic, with study notes' },
   quiz: { title: 'AI Quiz', icon: 'sparkles', view: quiz, group: 'Learn', tab: 'Quiz', sub: 'UPSC Prelims & Mains practice, generated on any topic' },
   notes: { title: 'Notes', icon: 'notes', view: notes, group: 'Learn', tab: 'Notes', sub: 'Your notebook with spaced revision' },

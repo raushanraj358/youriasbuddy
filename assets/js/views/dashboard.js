@@ -123,7 +123,7 @@ export function mount(el, _p, { setSub }) {
             ['study?start=1', 'timer', 'Focus', 'Pomodoro / stopwatch', 'var(--accent-soft)', 'var(--accent)'],
             ['quiz', 'sparkles', 'AI Quiz', 'Prelims & Mains', 'var(--info-soft)', 'var(--info)'],
             ['notes?new=1', 'edit', 'New note', 'Capture a topic', 'var(--good-soft)', 'var(--good)'],
-            ['resources', 'library', 'Library', 'Books & sources', 'var(--warn-soft)', 'var(--warn)'],
+            ['news', 'globe', 'Current affairs', 'Today\'s UPSC news', 'var(--warn-soft)', 'var(--warn)'],
           ].map(([h, i, b, s, bg, c]) => `<a class="ql" href="#/${h}"><span class="ql-ico" style="background:${bg};color:${c}">${icon(i, 19)}</span><b>${b}</b><span>${s}</span></a>`).join('')}
         </div>
       </div>

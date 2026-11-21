@@ -45,7 +45,7 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
   `el.innerHTML` and use **event delegation** on `el` (`data-*` attributes on buttons).
 - **Always `esc()`** user/AI text interpolated into HTML. Render Markdown only through `md()` from `md.js`, which escapes first.
 - If a view subscribes to global events, return an unmount function that removes them.
-- The mobile tab bar holds 6 tabs. Don't add another without removing one.
+- The mobile tab bar holds 7 tabs (grid `repeat(7, 1fr)` in styles.css). Don't add more; swap one out instead.
 
 ### State (`store.js`)
 - Mutate `S()` directly, then call `commit()`. New top-level keys need a default in `defaults()`. Add object-valued keys that need
@@ -71,6 +71,14 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
   in Supabase. **Never hand-edit `supabase/functions/ai/index.ts`.**
 - Edge Function: CORS + `ALLOWED_ORIGINS` check, then the caller is identified (Supabase user JWT, else guest by IP). Daily usage is counted
   via the `bump_ai_usage` RPC (service role only). Default limits: 25/day for users, 5/day for guests.
+
+### Daily current affairs
+- `views/news.js` calls `fetchNews()` in ai.js → POST `{ action: 'news', day? }` to the same `ai` Edge Function (`handleNews` in
+  `tools/edge_handler.js`). It is generated once per IST day with Gemini + `tools: [{ google_search: {} }]` (JSON mode can't be combined
+  with grounding, so the text is parsed loosely and normalised by `cleanDigest`), then stored in `public.daily_news`. A row-level
+  claim (`status = 'generating'` + `updated_at` compare-and-set) stops parallel generation. It doesn't count against user AI limits.
+- Keep rendering Google's `searchEntryPoint.renderedContent` (the Search Suggestions box) in the sandboxed iframe; Google's grounding terms require it.
+- Digests are cached per device in localStorage `yib:news` (last 10 days), separate from synced user data. Quiz reads them via `#/quiz?news=YYYY-MM-DD`.
 
 ### Database (`supabase/schema.sql`)
 - Must stay idempotent (safe to re-run). RLS on every table; `ai_usage` intentionally has no policies (service role only).

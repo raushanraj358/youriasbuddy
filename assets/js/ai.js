@@ -113,3 +113,42 @@ export function cleanMCQs(raw) {
     }))
     .filter((q) => q.stem && q.options.length === 4 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < 4);
 }
+
+/* ---------------- Daily current affairs ---------------- */
+const NEWS_CACHE = 'yib:news';
+function newsCache() {
+  try { return JSON.parse(localStorage.getItem(NEWS_CACHE)) || {}; } catch { return {}; }
+}
+/** A digest saved on this device (works offline), or null. */
+export function cachedNews(day) {
+  return newsCache()[day] || null;
+}
+function cacheNews(res) {
+  try {
+    const all = newsCache();
+    all[res.day] = { day: res.day, data: res.data, sources: res.sources, searchHtml: res.searchHtml, at: Date.now() };
+    const keep = Object.keys(all).sort().slice(-10); // last 10 days on this device
+    localStorage.setItem(NEWS_CACHE, JSON.stringify(Object.fromEntries(keep.map((k) => [k, all[k]]))));
+  } catch {}
+}
+
+/** Fetch the daily digest from the site's AI function. day = 'YYYY-MM-DD' (IST) or empty for today. */
+export async function fetchNews(day = '', { signal } = {}) {
+  if (!config().serverAI) throw new AIError('Current affairs need the site\'s AI server, which is not set up yet.', 'NO_KEY');
+  let res;
+  try {
+    res = await fetch(aiEndpoint(), {
+      method: 'POST',
+      signal,
+      headers: { 'Content-Type': 'application/json', apikey: config().supabaseAnonKey, Authorization: `Bearer ${config().supabaseAnonKey}` },
+      body: JSON.stringify({ action: 'news', day }),
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    throw new AIError('Could not reach the server. Check your connection and try again.', 'API');
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data) throw new AIError(data?.error || `Server error (${res.status})`, 'API');
+  if (data.status === 'ready') cacheNews(data);
+  return data;
+}
