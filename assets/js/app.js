@@ -143,7 +143,7 @@ function onboarding() {
   openModal({
     title: 'Welcome',
     body: `
-      <div class="onboard-hero"><img src="assets/img/logo-wordmark.png" alt="YourIASBuddy.com" width="722" height="150"><h3>Your UPSC journey, organised.</h3>
+      <div class="onboard-hero"><div class="brand onboard-brand"><img class="brand-mark" src="assets/img/logo-mark.png" alt="" width="64" height="64"><span class="brand-text"><span class="brand-name">Your<b>IAS</b>Buddy<i>.com</i></span><span class="brand-tag">Prepare · Learn · Revise · Crack UPSC</span></span></div><h3>Your UPSC journey, organised.</h3>
       <p class="muted" style="margin:6px 0 18px">Tracker, focus timer, reminders, notes, resources and AI quizzes — all in one calm place. ${cloud().configured ? 'Already have an account? Sign in to bring back your progress.' : 'Your data stays on this device.'}</p></div>
       <div class="stack">
         <div class="field"><label for="obName">What should we call you?</label><input class="input" id="obName" placeholder="Your name" value="${esc(p.name)}"></div>
