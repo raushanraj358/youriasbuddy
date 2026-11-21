@@ -175,6 +175,7 @@ function onboarding() {
 }
 
 /* ---------- Boot ---------- */
+$('#year').textContent = new Date().getFullYear();
 renderNav();
 renderCountdown();
 applyTheme();
