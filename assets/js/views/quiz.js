@@ -4,8 +4,6 @@ import { esc, uid, fmtClock, shuffle, wordCount, timeAgo, dateKey, addDays } fro
 import { SUBJECTS, SYLLABUS, SAMPLE_QUIZ, subjectById } from '../data.js';
 import { runAI, cleanMCQs, hasAI, friendlyError, AIError } from '../ai.js';
 import { toast, hbars, emptyState, ring } from '../ui.js';
-import { cachedNews } from '../ai.js';
-import { digestToMarkdown } from './news.js';
 
 const DIFFICULTY = ['Foundation', 'Moderate', 'UPSC standard', 'Tough'];
 const PATTERNS = ['Statement-based', 'Pair matching', 'Statement-I / Statement-II', 'Direct'];
@@ -31,17 +29,6 @@ export function mount(el, params) {
       cfg.contextTitle = n.title || 'Untitled note';
       cfg.topic = n.title || '';
       if (n.subject && n.subject !== 'csat') { cfg.subject = n.subject; if (cfg.mode === 'csat') cfg.mode = 'prelims'; }
-      phase = 'setup';
-    }
-  }
-  if (params.news) {
-    const nd = cachedNews(params.news);
-    if (nd?.data) {
-      cfg.context = digestToMarkdown(nd.day, nd.data).slice(0, 6000);
-      cfg.contextTitle = `Current affairs · ${params.news}`;
-      cfg.topic = 'Current affairs of the day';
-      cfg.subject = 'current';
-      if (cfg.mode === 'csat') cfg.mode = 'prelims';
       phase = 'setup';
     }
   }

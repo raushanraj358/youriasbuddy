@@ -15,8 +15,8 @@ No install and no build step. It's a static web app on GitHub Pages (custom doma
 | **Study Hours** | Pomodoro + stopwatch (survives reloads), manual logging, 14-day chart vs target, subject split, 6-month heatmap, session history |
 | **Reminders** | Once / daily / weekdays / weekly reminders, presets, browser notifications + chime |
 | **Study Material** | The UPSC CSE syllabus by paper → subject → topic. Track each topic (Not started / Reading / Done / Revised), generate AI study notes (English or हिन्दी) with Prelims pointers, Mains angles and PYQ themes, save them to Notes, quiz yourself on the topic, see recommended sources, add your own topics (e.g. for your optional) |
-| **Current Affairs** | A daily UPSC digest compiled from **Google Search** (Gemini grounding): 12–16 stories with category, GS paper, summary, UPSC angle, Prelims facts, a probable Mains question and keywords, plus **UPSC Essentials** (key terms in the news) and source links. Filter by category, browse past days, save stories to Notes, and quiz yourself on the day's news. Generated once a day for everyone, so it doesn't use anyone's AI allowance |
-| **Magazines** | Month-by-month links to the **Vision IAS Monthly Current Affairs Magazine** (each opens that issue in Vision IAS's archive), with "mark read" tracking that syncs to your account, plus Yojana/Kurukshetra and Down To Earth. The Current Affairs page also links **Vision IAS News Today** and **Daily News Summary** |
+| **Current Affairs** | Hand-picked daily sources for UPSC news: **Level Up IAS current affairs**, Vision IAS Daily News Summary, Indian Express UPSC Essentials, PIB, The Hindu and PRS |
+| **Magazines** | Month-by-month links to the **Vision IAS Monthly Current Affairs Magazine** (each opens that issue in Vision IAS's archive), with "mark read" tracking that syncs to your account, plus Yojana/Kurukshetra and Down To Earth. |
 | **AI Quiz** | **Prelims GS** (statement-based, pair matching, Statement-I/II), **CSAT** and **Mains** questions with answer frameworks + **AI answer evaluation**. English & हिन्दी, practice/exam modes, negative marking, mistake book → Notes, accuracy by subject |
 | **Notes** | Markdown notebook with highlights, subject filters, search, pinning, spaced revision (1-3-7-15-30-60 days), "Quiz me on this note" |
 | **Resources** | Curated library (UPSC, NCERT, PIB, PRS, standard books…) with progress tracking, plus your own links/books/videos |
@@ -34,7 +34,6 @@ to the user's account so it follows them across phone and laptop.
 | Sign-in | Supabase Auth | Google sign-in (email magic link as a fallback) |
 | Cloud sync | Supabase Postgres | One row per user, protected by row-level security |
 | Free AI | Supabase Edge Function `ai` | Holds the Gemini key; GitHub Pages can't keep secrets or run server code |
-| Daily current affairs | Same `ai` function + `daily_news` table | Gemini with Google Search grounding, once per day (IST), cached for all visitors |
 | AI model | Google Gemini free tier | Stays free as long as billing is **not** enabled on the Google project |
 
 **Free AI allowance:** 5 requests a day for guests (counted per IP address) and 25 a day for signed-in users. Each quiz, study-notes page or
@@ -87,14 +86,6 @@ key or the Gemini key in this file or anywhere else in the repo.
 
 **Email sign-in** ("Use email instead") also works, but Supabase's built-in mailer sends only a few emails per hour. Set `emailAuth: false`
 in `config.js` to hide it, or add free SMTP (e.g. Resend or Brevo) under Supabase → Authentication → Emails.
-
-## How daily current affairs work
-
-- The first visitor each day (IST) triggers one Gemini request with **Google Search grounding**. The digest and its source links are saved in
-  `public.daily_news` and served to everyone else instantly. Other visitors see "being compiled" and the page refreshes itself.
-- It doesn't count towards anyone's daily AI allowance. If generation fails, it retries on the next visit after 10 minutes.
-- Google's terms for grounding require showing its "Search Suggestions" box. The app shows it under **Sources** in a sandboxed frame.
-- The last 30 days stay available. Each device also keeps the last 10 days it opened, so they work offline.
 
 ## How sync works
 
@@ -154,7 +145,6 @@ tools/                        Edge Function handler source + build script
 
 | Symptom | Fix |
 |---|---|
-| Current affairs page says it "isn't connected" or "news storage is not set up" | Re-run `supabase/schema.sql` (creates `daily_news`) and re-paste the latest `supabase/functions/ai/index.ts` |
 | "The free AI is not available right now" | The `ai` function isn't deployed, or it's named differently. Check Supabase → Edge Functions |
 | AI returns 401 | "Verify JWT" is still on for the `ai` function. Turn it off |
 | AI returns "Forbidden" | The site's address isn't in `ALLOWED_ORIGINS` |

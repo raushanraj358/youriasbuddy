@@ -25,7 +25,7 @@ const ROUTES = {
   tracker: { title: 'Daily Tracker', icon: 'tracker', view: tracker, group: 'Plan', tab: 'Tracker', sub: 'Plan the day, build habits, review consistency' },
   study: { title: 'Study Hours', icon: 'timer', view: study, group: 'Plan', tab: 'Timer', sub: 'Focus timer, logs and analytics' },
   reminders: { title: 'Reminders', icon: 'bell', view: reminders, group: 'Plan', sub: 'Never miss your routine' },
-  news: { title: 'Current Affairs', icon: 'globe', view: news, group: 'Learn', tab: 'News', sub: 'Today\'s UPSC-relevant news, explained' },
+  news: { title: 'Current Affairs', icon: 'globe', view: news, group: 'Learn', tab: 'News', sub: 'Today\'s UPSC-relevant news, from trusted sources' },
   magazines: { title: 'Magazines', icon: 'file', view: magazines, group: 'Learn', sub: 'Monthly current affairs magazines' },
   syllabus: { title: 'Study Material', icon: 'book', view: syllabus, group: 'Learn', tab: 'Study', sub: 'The UPSC CSE syllabus, topic by topic, with study notes' },
   quiz: { title: 'AI Quiz', icon: 'sparkles', view: quiz, group: 'Learn', tab: 'Quiz', sub: 'UPSC Prelims & Mains practice, generated on any topic' },

@@ -64,18 +64,3 @@ as $$
 $$;
 revoke all on function public.refund_ai_usage(text) from public, anon, authenticated;
 grant execute on function public.refund_ai_usage(text) to service_role;
-
--- Daily current-affairs digest (one row per IST day), written by the "ai" Edge Function and shown to everyone.
-create table if not exists public.daily_news (
-  day         date primary key,
-  status      text not null default 'generating',  -- generating | ready | failed
-  data        jsonb,
-  sources     jsonb,
-  search_html text,
-  error       text,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
-);
-alter table public.daily_news enable row level security;
-revoke all on public.daily_news from anon, authenticated;
-grant all on public.daily_news to service_role;

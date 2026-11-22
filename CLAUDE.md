@@ -72,17 +72,8 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
 - Edge Function: CORS + `ALLOWED_ORIGINS` check, then the caller is identified (Supabase user JWT, else guest by IP). Daily usage is counted
   via the `bump_ai_usage` RPC (service role only). Default limits: 25/day for users, 5/day for guests.
 
-### Daily current affairs
-- `views/news.js` calls `fetchNews()` in ai.js → POST `{ action: 'news', day? }` to the same `ai` Edge Function (`handleNews` in
-  `tools/edge_handler.js`). It is generated once per IST day with Gemini + `tools: [{ google_search: {} }]` (JSON mode can't be combined
-  with grounding, so the text is parsed loosely and normalised by `cleanDigest`), then stored in `public.daily_news`. A row-level
-  claim (`status = 'generating'` + `updated_at` compare-and-set) stops parallel generation. It doesn't count against user AI limits.
-- If grounding fails (free-tier keys usually get 429 for grounded calls), `feedDigest` falls back to today's RSS headlines (`NEWS_FEEDS`:
-  The Hindu sections + Indian Express UPSC) summarised by a plain `callAI` call; `digest.mode` is `'search'` or `'feeds'`. The whole run
-  must finish before Supabase's ~150 s limit (`generateDigest` deadline). The real failure reason is stored in `daily_news.error`.
-- Keep rendering Google's `searchEntryPoint.renderedContent` (the Search Suggestions box) in the sandboxed iframe; Google's grounding terms require it.
-- Digests are cached per device in localStorage `yib:news` (last 10 days), separate from synced user data. Quiz reads them via `#/quiz?news=YYYY-MM-DD`.
-
+### Current affairs
+- `views/news.js` is a links-only page of daily sources (no AI). `views/magazines.js` shares its `caTabs()` switcher.
 - External links: Level Up IAS daily current affairs in `LEVELUP_IAS`, Vision IAS in `VISION_IAS` (data.js). Monthly issues use `…/monthly-magazine/archive?year=Y&month=M`
   (month = issue month; verified Nov 2026). Their article URLs aren't stable, so never deep-link to them. Read state: `S().magazines.read`.
 

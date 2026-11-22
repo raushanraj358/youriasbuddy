@@ -24,7 +24,7 @@ function saveUse(used, limit) {
 const NETWORK_MSG = 'Could not reach the AI service. Check your internet connection and try again.';
 
 // Only our own, user-friendly server messages are shown as-is; anything else (e.g. raw provider text) becomes a standard message.
-const SAFE_SERVER_MSG = /^(You've used today's|Guests get|The free AI is busy|The AI couldn't answer|The AI is taking too long|The answer was too long|Could not compile today's current affairs|Current affairs need|News storage is not set up)/;
+const SAFE_SERVER_MSG = /^(You've used today's|Guests get|The free AI is busy|The AI couldn't answer|The AI is taking too long|The answer was too long)/;
 function serverError(status, data) {
   const msg = typeof data?.error === 'string' ? data.error : '';
   if (msg && SAFE_SERVER_MSG.test(msg)) return new AIError(msg, status === 429 ? 'RATE' : 'API');
@@ -136,47 +136,4 @@ export function cleanMCQs(raw) {
       concept: String(q.concept || ''),
     }))
     .filter((q) => q.stem && q.options.length === 4 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < 4);
-}
-
-/* ---------------- Daily current affairs ---------------- */
-const NEWS_CACHE = 'yib:news';
-function newsCache() {
-  try { return JSON.parse(localStorage.getItem(NEWS_CACHE)) || {}; } catch { return {}; }
-}
-/** A digest saved on this device (works offline), or null. */
-export function cachedNews(day) {
-  return newsCache()[day] || null;
-}
-function cacheNews(res) {
-  try {
-    const all = newsCache();
-    all[res.day] = { day: res.day, data: res.data, sources: res.sources, searchHtml: res.searchHtml, at: Date.now() };
-    const keep = Object.keys(all).sort().slice(-10); // last 10 days on this device
-    localStorage.setItem(NEWS_CACHE, JSON.stringify(Object.fromEntries(keep.map((k) => [k, all[k]]))));
-  } catch {}
-}
-
-/** Fetch the daily digest from the site's AI function. day = 'YYYY-MM-DD' (IST) or empty for today. */
-export async function fetchNews(day = '', { signal } = {}) {
-  if (!config().serverAI) throw new AIError('Current affairs need the site\'s AI server, which is not set up yet.', 'NO_KEY');
-  let res;
-  try {
-    res = await fetch(aiEndpoint(), {
-      method: 'POST',
-      signal,
-      headers: { 'Content-Type': 'application/json', apikey: config().supabaseAnonKey, Authorization: `Bearer ${config().supabaseAnonKey}` },
-      body: JSON.stringify({ action: 'news', day }),
-    });
-  } catch (e) {
-    if (e.name === 'AbortError') throw e;
-    throw new AIError(NETWORK_MSG, 'API');
-  }
-  const data = await res.json().catch(() => null);
-  if (!res.ok || !data) throw serverError(res.ok ? 502 : res.status, data);
-  if (data.status === 'failed' && data.error && !SAFE_SERVER_MSG.test(data.error)) {
-    console.warn('[news]', data.error);
-    data.error = "Could not compile today's current affairs right now. Please try again in a few minutes.";
-  }
-  if (data.status === 'ready') cacheNews(data);
-  return data;
 }
