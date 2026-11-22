@@ -1,4 +1,4 @@
-// Study Material: the UPSC CSE syllabus subject → topic, with progress tracking and AI-written study notes per topic.
+// Study Material: the UPSC CSE syllabus subject → topic, with progress tracking, offline key notes and AI-written study notes per topic.
 import { S, commit } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, uid, dateKey, addDays, timeAgo } from '../utils.js';
@@ -6,6 +6,7 @@ import { SUBJECTS, SYLLABUS, LIBRARY, subjectById } from '../data.js';
 import { runAI, hasAI, friendlyError, AIError } from '../ai.js';
 import { toast, confirmDialog } from '../ui.js';
 import { md } from '../md.js';
+import { keyNotes, keyNotesMarkdown } from '../content.js';
 
 const STATUSES = [
   { id: '', label: 'Not started', color: 'var(--muted)' },
@@ -125,6 +126,9 @@ export function mount(el, params, { setSub }) {
   const topic = sub && params.topic && topicsOf(sub).includes(params.topic) ? params.topic : null;
   let lang = S().settings.materialLang || 'en';
   let loadTimer = null;
+  let tab = null; // 'notes' (offline key notes) | 'ai'
+  let kn; // undefined while loading, null if this topic has no key notes
+  const keyNote = () => S().notes.find((n) => n.subject === sub && n.title === topic && (n.tags || []).includes('key-notes'));
 
   /* ---------------- All subjects ---------------- */
   function overview() {
@@ -182,7 +186,7 @@ export function mount(el, params, { setSub }) {
             return `<div class="li syl-topic">
               <button class="status-pill" data-cycle="${i}" style="--c:${stt.color}" title="Change status">${stt.label}</button>
               <a class="li-main" href="${href(sub, t)}" style="text-decoration:none;color:inherit"><div class="li-title">${esc(t)}</div>
-                <div class="li-sub">${generating?.key === k ? 'Writing notes…' : mat ? `${icon('check', 12)} Study notes ready` : 'Open to read study notes'}</div></a>
+                <div class="li-sub">${generating?.key === k ? 'Writing AI notes…' : custom.has(t) ? (mat ? `${icon('check', 12)} AI notes ready` : 'Open to generate AI notes') : `Key notes${mat ? ` · ${icon('check', 12)} AI notes ready` : ''}`}</div></a>
               ${custom.has(t) ? `<button class="icon-btn sm bare" data-remove="${i}" aria-label="Remove topic">${icon('trash', 14)}</button>` : ''}
               <a class="icon-btn sm bare" href="${href(sub, t)}" aria-label="Open">${icon('right', 16)}</a>
             </div>`;
@@ -215,7 +219,24 @@ export function mount(el, params, { setSub }) {
     const langSeg = `<div class="seg"><button class="${lang === 'en' ? 'on' : ''}" data-lang="en">English</button><button class="${lang === 'hi' ? 'on' : ''}" data-lang="hi">हिन्दी</button></div>`;
 
     let body;
-    if (busy) {
+    if (tab === 'notes') {
+      if (kn === undefined) body = `<div class="stack" style="padding:8px 0"><div class="skeleton"></div><div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:60%"></div></div>`;
+      else if (!kn) {
+        body = `<div class="empty" style="padding:28px 8px"><div class="em-icon">${icon('book', 24)}</div><h4>No key notes for this topic yet</h4>
+          <p>Key notes cover the built-in syllabus topics. For your own topics, use AI notes.</p>
+          <button class="btn accent" data-tab="ai" style="margin-top:14px">${icon('sparkles', 15)} Go to AI notes</button></div>`;
+      } else {
+        const saved = keyNote();
+        body = `<div class="notice info" style="margin-bottom:16px">${icon('book', 18)}<div class="hint">Ready-made key notes for quick revision, no AI needed. Read them alongside the standard sources on the right.</div></div>
+          <article class="md">${md(keyNotesMarkdown(kn))}</article>
+          <hr class="divider">
+          <div class="row wrap">
+            ${saved ? `<a class="btn" href="#/notes?id=${esc(saved.id)}">${icon('notes', 15)} Open in my notes</a>` : `<button class="btn" data-savekey>${icon('notes', 15)} Save to my notes</button>`}
+            <span class="spacer"></span>
+            <button class="btn ghost" data-tab="ai">${icon('sparkles', 15)} ${mat ? 'Read AI notes' : 'Get detailed AI notes'}</button>
+          </div>`;
+      }
+    } else if (busy) {
       body = `<div class="loader"><div class="orbit"></div>
         <div><h3 class="serif" style="font-size:26px">Writing your study notes</h3><p class="muted" id="loadLine">${LOADING_LINES[0]}</p></div>
         <div style="width:min(420px,100%)" class="stack"><div class="skeleton"></div><div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:60%"></div></div>
@@ -233,7 +254,7 @@ export function mount(el, params, { setSub }) {
     } else {
       body = `<div class="empty" style="padding:28px 8px">
         <div class="em-icon">${icon('book', 24)}</div>
-        <h4>Study notes for this topic</h4>
+        <h4>Detailed AI notes for this topic</h4>
         <p>Concise, exam-oriented notes: key concepts, Articles & Acts, Prelims pointers, Mains angles, PYQ themes and a quick-revision box.</p>
         ${err ? `<div class="notice" style="margin:14px auto 0;max-width:520px;text-align:left">${icon('alert', 18)}<div>${esc(err.message)}${['NO_KEY', 'AUTH', 'MODEL'].includes(err.code) ? ` <a href="#/settings" style="font-weight:700">Open Settings →</a>` : ''}</div></div>` : ''}
         ${hasAI()
@@ -250,6 +271,10 @@ export function mount(el, params, { setSub }) {
           <span class="tag"><span class="dot" style="background:${s.color}"></span>${esc(s.paper)} · ${esc(s.short)}</span>
           <h2 class="serif">${esc(topic)}</h2>
           <div class="seg" role="group" aria-label="Topic status">${STATUSES.map((x) => `<button class="${cur === x.id ? 'on' : ''}" data-status="${x.id}">${x.label}</button>`).join('')}</div>
+        </div>
+        <div class="seg" role="tablist" aria-label="Notes" style="margin-bottom:16px">
+          <button role="tab" aria-selected="${tab === 'notes'}" class="${tab === 'notes' ? 'on' : ''}" data-tab="notes">${icon('book', 13)} Key notes</button>
+          <button role="tab" aria-selected="${tab === 'ai'}" class="${tab === 'ai' ? 'on' : ''}" data-tab="ai">${icon('sparkles', 13)} AI notes${mat ? ' ✓' : busy ? ' …' : ''}</button>
         </div>
         ${body}
       </div>
@@ -296,6 +321,7 @@ export function mount(el, params, { setSub }) {
     if (!b) return;
     const d = b.dataset;
     if (d.paper) { paperFilter = d.paper; draw(); }
+    else if (d.tab) { tab = d.tab; draw(); }
     else if (d.cycle !== undefined) {
       const t = topicsOf(sub)[Number(d.cycle)];
       const k = keyOf(sub, t);
@@ -324,9 +350,21 @@ export function mount(el, params, { setSub }) {
       draw();
     } else if ('generate' in d) {
       if (syl().material[keyOf(sub, topic)] && !(await confirmDialog('Rewrite these notes? The current version will be replaced.', 'Rewrite'))) return;
+      tab = 'ai';
       generate(sub, topic, lang);
     } else if ('cancel' in d) {
       generating?.controller.abort();
+    } else if ('savekey' in d) {
+      if (!kn || keyNote()) return draw();
+      const now = Date.now();
+      S().notes.push({
+        id: uid(), title: topic, subject: sub, tags: ['key-notes'], pinned: false,
+        body: keyNotesMarkdown(kn), createdAt: now, updatedAt: now, openedAt: now,
+        revisions: 0, nextRevision: dateKey(addDays(new Date(), 1)),
+      });
+      commit();
+      toast('Saved to Notes', 'good', 'Added to your revision schedule.');
+      draw();
     } else if ('savenote' in d) {
       const k = keyOf(sub, topic);
       const mat = syl().material[k];
@@ -359,6 +397,15 @@ export function mount(el, params, { setSub }) {
 
   const onChange = () => el.isConnected && draw();
   window.addEventListener('yib:syllabus', onChange);
+  if (topic) {
+    const k = keyOf(sub, topic);
+    const builtIn = (SYLLABUS[sub] || []).includes(topic);
+    tab = builtIn && generating?.key !== k && lastError?.key !== k ? 'notes' : 'ai';
+    keyNotes(sub, topic).then((n) => {
+      kn = n;
+      if (el.isConnected) draw();
+    });
+  }
   draw();
   return () => {
     clearInterval(loadTimer);

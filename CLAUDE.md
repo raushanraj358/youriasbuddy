@@ -36,6 +36,7 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
   prompts.js   TASKS whitelist + sanitize() + buildMessages(); shared with the Edge Function
   providers.js Gemini (Auto model fallback chain) + OpenAI adapters; shared with the Edge Function
   data.js      SUBJECTS, SYLLABUS (subject → topics), LIBRARY, HABITS, TIPS, SAMPLE_QUIZ
+  content.js   static key notes per topic, lazy-loaded from content/<subjectId>.js (keyed by exact SYLLABUS topic name)
   config.js    public site config (Supabase URL/key, feature flags, display-only AI limits)
 ```
 
@@ -84,7 +85,8 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
 
 - UPSC accuracy matters: prompts insist on standard sources (NCERT, Laxmikanth, GoI). Keep that tone when adding prompts or static content.
 - Subject ids (`polity`, `history`, …) are stored in user data. Don't rename them. Adding topics to `SYLLABUS` is safe; renaming a topic
-  orphans its saved status/notes.
+  orphans its saved status/notes. When you add or rename a topic, add or rename its entry in `assets/js/content/<subjectId>.js` too
+  (`{ overview, sections: [[title, [points]]], prelims, mains, traps }`; avoid `=` in traps, they're wrapped in `==mark==`).
 - UI copy: short, calm, encouraging; Indian English; dates via `fmtDate` (en-IN). Hindi output is supported for AI tasks (`language: 'hi'`).
 - Styling: use the existing CSS tokens/classes in `assets/css/styles.css` (`card`, `btn`, `chip`, `seg`, `tag`, `notice`, `list/li`,
   `progress`, `stat-card`). Colours go through CSS variables so light and dark themes both work.
