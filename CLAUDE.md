@@ -77,10 +77,13 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
   `tools/edge_handler.js`). It is generated once per IST day with Gemini + `tools: [{ google_search: {} }]` (JSON mode can't be combined
   with grounding, so the text is parsed loosely and normalised by `cleanDigest`), then stored in `public.daily_news`. A row-level
   claim (`status = 'generating'` + `updated_at` compare-and-set) stops parallel generation. It doesn't count against user AI limits.
+- If grounding fails (free-tier keys usually get 429 for grounded calls), `feedDigest` falls back to today's RSS headlines (`NEWS_FEEDS`:
+  The Hindu sections + Indian Express UPSC) summarised by a plain `callAI` call; `digest.mode` is `'search'` or `'feeds'`. The whole run
+  must finish before Supabase's ~150 s limit (`generateDigest` deadline). The real failure reason is stored in `daily_news.error`.
 - Keep rendering Google's `searchEntryPoint.renderedContent` (the Search Suggestions box) in the sandboxed iframe; Google's grounding terms require it.
 - Digests are cached per device in localStorage `yib:news` (last 10 days), separate from synced user data. Quiz reads them via `#/quiz?news=YYYY-MM-DD`.
 
-- External Vision IAS links live in `VISION_IAS` in data.js. Monthly issues use `…/monthly-magazine/archive?year=Y&month=M`
+- External links: Level Up IAS daily current affairs in `LEVELUP_IAS`, Vision IAS in `VISION_IAS` (data.js). Monthly issues use `…/monthly-magazine/archive?year=Y&month=M`
   (month = issue month; verified Nov 2026). Their article URLs aren't stable, so never deep-link to them. Read state: `S().magazines.read`.
 
 ### Database (`supabase/schema.sql`)

@@ -1,8 +1,9 @@
-// Current Affairs: a daily UPSC digest compiled from Google Search by the site's AI function (cached once per day for everyone).
+// Current Affairs: a daily UPSC digest compiled by the site's AI function from Google Search, or from news feeds when
+// search isn't available (cached once per day for everyone).
 import { S, commit } from '../store.js';
 import { icon } from '../icons.js';
 import { esc, uid, dateKey, addDays, fmtDate } from '../utils.js';
-import { subjectById, VISION_IAS } from '../data.js';
+import { subjectById, VISION_IAS, LEVELUP_IAS } from '../data.js';
 import { fetchNews, cachedNews, friendlyError } from '../ai.js';
 import { config } from '../config.js';
 import { toast } from '../ui.js';
@@ -19,9 +20,9 @@ const CATEGORY_SUBJECT = {
   'History & Culture': 'culture',
   'Schemes & Reports': 'current',
 };
-const LOADING_LINES = ['Searching Google for today\'s news…', 'Reading PIB, courts and Parliament updates…', 'Picking what matters for UPSC…', 'Linking news to the static syllabus…', 'Writing Prelims facts and Mains angles…', 'Explaining key terms…'];
+const LOADING_LINES = ['Gathering today\'s news…', 'Reading PIB, courts and Parliament updates…', 'Picking what matters for UPSC…', 'Linking news to the static syllabus…', 'Writing Prelims facts and Mains angles…', 'Explaining key terms…'];
 const FALLBACK_LINKS = [
-  ['Vision IAS · News Today', VISION_IAS.newsToday],
+  ['Level Up IAS · Current Affairs', LEVELUP_IAS.currentAffairs],
   ['Vision IAS · Daily News Summary', VISION_IAS.dailySummary],
   ['Indian Express · UPSC Essentials', 'https://indianexpress.com/section/upsc-current-affairs/'],
   ['Press Information Bureau', 'https://pib.gov.in'],
@@ -39,11 +40,11 @@ export function caTabs(active) {
 
 function visionCard() {
   return `<div class="card vision-card">
-    <div class="card-head"><h3>${icon('star', 17)} Vision IAS daily</h3></div>
-    <p class="hint" style="margin-bottom:12px">Important news for UPSC, every day, from Vision IAS.</p>
+    <div class="card-head"><h3>${icon('star', 17)} Daily current affairs</h3></div>
+    <p class="hint" style="margin-bottom:12px">Important news for UPSC, every day, from Level Up IAS and Vision IAS.</p>
     <div class="stack" style="gap:8px">
-      <a class="btn block" href="${VISION_IAS.newsToday}" target="_blank" rel="noopener">${icon('external', 14)} News Today</a>
-      <a class="btn block" href="${VISION_IAS.dailySummary}" target="_blank" rel="noopener">${icon('external', 14)} Daily News Summary</a>
+      <a class="btn block" href="${LEVELUP_IAS.currentAffairs}" target="_blank" rel="noopener">${icon('external', 14)} Level Up IAS · Current Affairs</a>
+      <a class="btn block" href="${VISION_IAS.dailySummary}" target="_blank" rel="noopener">${icon('external', 14)} Vision IAS · Daily News Summary</a>
       <a class="btn ghost block" href="#/magazines">${icon('book', 14)} Monthly magazines</a>
     </div>
   </div>`;
@@ -134,7 +135,7 @@ export function mount(el, params, { setSub }) {
     <section class="card news-hero">
       <span class="eyebrow">Daily current affairs · ${esc(longDate(state.day))}</span>
       <h2 class="serif">${esc(d.theme || 'Today in UPSC-relevant news')}</h2>
-      <p class="hint">${d.items.length} stories · ${d.essentials.length} key terms · compiled with AI from Google Search. Verify important facts with the linked sources.</p>
+      <p class="hint">${d.items.length} stories · ${d.essentials.length} key terms · compiled with AI from ${d.mode === 'feeds' ? 'today\'s news feeds (The Hindu, Indian Express)' : 'Google Search'}. Verify important facts with the linked sources.</p>
       <div class="row wrap" style="margin-top:14px">
         <a class="btn accent" href="#/quiz?news=${state.day}">${icon('sparkles', 15)} Quiz me on this</a>
         <button class="btn" data-saveall>${icon('notes', 15)} Save digest to notes</button>

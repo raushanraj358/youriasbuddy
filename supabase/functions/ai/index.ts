@@ -318,6 +318,7 @@ function callAI({ provider, ...rest }) {
 //   AI_DAILY_LIMIT        optional, requests/day for signed-in users (default 25)
 //   AI_GUEST_DAILY_LIMIT  optional, requests/day per IP for guests (default 5)
 //   GEMINI_MODEL          optional (default "auto")
+// News uses Google Search grounding when the key has quota for it, else today's RSS headlines (see generateDigest).
 // Also serves the daily current-affairs digest: POST { action: 'news', day? } (see handleNews).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically by Supabase.
 
@@ -353,8 +354,7 @@ Prioritise: PIB releases, government schemes and policies, Supreme Court and Hig
 Skip: celebrity, entertainment, crime, sports results and party-political news unless they have a clear UPSC angle.
 Every fact must come from the search results. Do not invent numbers, dates or names; if unsure, leave it out.
 Write 12–16 items, each from a different story, plus 5–8 "UPSC Essentials": key terms or concepts in today's news, explained the way the Indian Express UPSC Essentials does.
-Reply with ONLY one JSON object (no markdown, no commentary) in exactly this shape:
-{"theme":"one line summing up the day for an aspirant","items":[{"title":"","category":"one of: ${NEWS_CATEGORIES.join(' | ')}","gs":"GS-I | GS-II | GS-III | GS-IV","summary":"2–3 factual sentences","upscAngle":"why it matters for UPSC and the static syllabus link","prelimsFacts":["",""],"mainsQuestion":"one probable Mains question","keywords":["",""],"source":"publication name"}],"essentials":[{"term":"","explanation":"2–3 sentences"}]}`;
+${digestShape()}`;
 }
 
 function parseLooseJSON(text) {
@@ -389,42 +389,142 @@ function cleanDigest(d) {
   return { theme: s(d?.theme, 300), items, essentials };
 }
 
-async function generateDigest(key, day) {
+// Shared output format for both ways of compiling the digest.
+const digestShape = (extra = '') => `Reply with ONLY one JSON object (no markdown, no commentary) in exactly this shape:
+{"theme":"one line summing up the day for an aspirant","items":[{"title":"","category":"one of: ${NEWS_CATEGORIES.join(' | ')}","gs":"GS-I | GS-II | GS-III | GS-IV","summary":"2–3 factual sentences","upscAngle":"why it matters for UPSC and the static syllabus link","prelimsFacts":["",""],"mainsQuestion":"one probable Mains question","keywords":["",""],"source":"publication name"${extra}}],"essentials":[{"term":"","explanation":"2–3 sentences"}]}`;
+const EDITOR = 'You are the current-affairs editor of a UPSC coaching institute. You are accurate, neutral and concise, and you reply with valid JSON only.';
+
+// 1) Gemini + Google Search grounding. Needs grounding quota on the key (free-tier keys often have none → 429).
+async function groundedDigest(key, day, deadline) {
   let last;
   for (const m of GEMINI_AUTO_CHAIN) {
-    const res = await fetch(`${GEMINI_BASE}/models/${m}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: 'You are the current-affairs editor of a UPSC coaching institute. You are accurate, neutral and concise, and you reply with valid JSON only.' }] },
-        contents: [{ role: 'user', parts: [{ text: newsPrompt(day) }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0.3 },
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
+    const left = deadline - Date.now();
+    if (left < 20e3) break;
+    let res, data;
+    try {
+      res = await fetch(`${GEMINI_BASE}/models/${m}:generateContent`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(Math.min(60e3, left)),
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: EDITOR }] },
+          contents: [{ role: 'user', parts: [{ text: newsPrompt(day) }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0.3 },
+        }),
+      });
+      data = await res.json().catch(() => ({}));
+    } catch (e) {
+      last = new Error(`${m}: ${e.name === 'TimeoutError' ? 'timed out' : e.message}`);
+      console.warn('[news]', last.message);
+      continue;
+    }
     if (!res.ok) {
       last = new Error(`${m} ${res.status}: ${data?.error?.message || ''}`);
       console.warn('[news]', last.message);
-      if (isModelUnavailable(res.status, data?.error?.message) || res.status === 429 || res.status >= 500) continue;
-      throw last;
+      if (res.status === 401 || res.status === 403) throw last;
+      continue;
     }
     const cand = data?.candidates?.[0];
     const text = (cand?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('');
-    const digest = cleanDigest(parseLooseJSON(text));
-    if (digest.items.length < 4) { last = new Error('Too few news items'); continue; }
+    let digest;
+    try { digest = cleanDigest(parseLooseJSON(text)); } catch (e) { last = new Error(`${m}: ${e.message}`); console.warn('[news]', last.message); continue; }
+    if (digest.items.length < 4) { last = new Error(`${m}: too few news items`); continue; }
     const gm = cand?.groundingMetadata || {};
     const seen = new Set();
     const sources = (gm.groundingChunks || [])
       .map((c) => ({ title: String(c?.web?.title || '').slice(0, 120), uri: String(c?.web?.uri || '') }))
       .filter((x) => /^https:\/\//.test(x.uri) && !seen.has(x.title + x.uri) && seen.add(x.title + x.uri))
       .slice(0, 40);
-    return { digest: { ...digest, model: m }, sources, searchHtml: String(gm.searchEntryPoint?.renderedContent || '') };
+    return { digest: { ...digest, model: m, mode: 'search' }, sources, searchHtml: String(gm.searchEntryPoint?.renderedContent || '') };
   }
-  throw last || new Error('Could not compile the news');
+  throw last || new Error('Search grounding unavailable');
 }
 
-async function handleNews(body, reply) {
+// 2) Fallback: today's headlines from public RSS feeds, summarised by a plain (non-grounded) model call.
+const NEWS_FEEDS = [
+  ['The Hindu', 'https://www.thehindu.com/news/national/feeder/default.rss', 25],
+  ['The Hindu', 'https://www.thehindu.com/news/international/feeder/default.rss', 15],
+  ['The Hindu', 'https://www.thehindu.com/business/Economy/feeder/default.rss', 15],
+  ['The Hindu', 'https://www.thehindu.com/sci-tech/feeder/default.rss', 15],
+  ['Indian Express', 'https://indianexpress.com/section/upsc-current-affairs/feed/', 15],
+];
+
+function rssText(block, tag) {
+  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i'));
+  if (!m) return '';
+  return m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+
+async function fetchHeadlines() {
+  const lists = await Promise.all(NEWS_FEEDS.map(async ([source, url, n]) => {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10e3), headers: { 'User-Agent': 'Mozilla/5.0 (compatible; YourIASBuddy news digest)' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const xml = await res.text();
+      return (xml.match(/<item[\s>][\s\S]*?<\/item>/gi) || []).slice(0, n).map((b) => ({
+        source,
+        title: rssText(b, 'title').slice(0, 200),
+        desc: rssText(b, 'description').slice(0, 280),
+        link: rssText(b, 'link'),
+      }));
+    } catch (e) {
+      console.warn('[news] feed failed', url, e.message);
+      return [];
+    }
+  }));
+  const seen = new Set();
+  return lists.flat().filter((h) => h.title && /^https:\/\//.test(h.link) && !seen.has(h.link) && seen.add(h.link));
+}
+
+async function feedDigest({ provider, key, model }, day, deadline) {
+  const heads = await fetchHeadlines();
+  if (heads.length < 8) throw new Error(`Only ${heads.length} headlines from the news feeds`);
+  const long = new Date(`${day}T12:00:00Z`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const list = heads.map((h, i) => `[${i + 1}] (${h.source}) ${h.title}${h.desc ? ` — ${h.desc}` : ''}`).join('\n');
+  const user = `Today is ${long} (India). Below are today's headlines from Indian newspapers, numbered.
+Pick the stories that matter most for the UPSC Civil Services Examination: government schemes and policies, Supreme Court and High Court judgments, Parliament and new laws, constitutional bodies, RBI and economic data, international relations and summits, environment, species and protected areas, science, space and defence technology, reports and indices, places in news, art and culture.
+Skip celebrity, entertainment, crime, sports results and party-political news unless they have a clear UPSC angle.
+Use only facts stated in the headlines below for the news itself; you may add well-established static background (NCERT, Laxmikanth, Government of India) for the UPSC angle and Prelims facts. Do not invent numbers, dates or names; if unsure, leave it out.
+Write 12–16 items, each from a different story, plus 5–8 "UPSC Essentials": key terms or concepts in today's news, explained the way the Indian Express UPSC Essentials does.
+For each item, "refs" lists the numbers of the headlines it is based on.
+
+HEADLINES
+${list}
+
+${digestShape(',"refs":[1]')}`;
+  const left = deadline - Date.now();
+  if (left < 15e3) throw new Error('No time left for the feed digest');
+  const text = await callAI({ provider, key, model, signal: AbortSignal.timeout(left), messages: [{ role: 'system', content: EDITOR }, { role: 'user', content: user }] });
+  const raw = parseLooseJSON(text);
+  const digest = cleanDigest(raw);
+  if (digest.items.length < 4) throw new Error('Too few news items from the feeds');
+  const used = new Set();
+  for (const it of Array.isArray(raw?.items) ? raw.items : []) {
+    for (const r of Array.isArray(it?.refs) ? it.refs : []) if (heads[Number(r) - 1]) used.add(Number(r) - 1);
+  }
+  const sources = [...used].sort((a, b) => a - b).slice(0, 40).map((i) => ({ title: `${heads[i].source}: ${heads[i].title}`.slice(0, 120), uri: heads[i].link }));
+  return { digest: { ...digest, model: provider === 'gemini' ? 'auto' : model, mode: 'feeds' }, sources, searchHtml: '' };
+}
+
+async function generateDigest(ai, day) {
+  // The Edge Function is stopped after ~150 s, so everything must finish well before that.
+  const deadline = Date.now() + 135e3;
+  if (ai.provider === 'gemini') {
+    try {
+      // Leave at least ~60 s for the feed fallback.
+      return await groundedDigest(ai.key, day, deadline - 60e3);
+    } catch (e) {
+      console.warn('[news] grounded digest failed, using news feeds:', e.message);
+    }
+  }
+  return feedDigest(ai, day, deadline);
+}
+
+async function handleNews(body, reply, ai) {
   const today = istDay();
   const day = /^\d{4}-\d{2}-\d{2}$/.test(body?.day || '') ? body.day : today;
   const days = async () => {
@@ -453,7 +553,7 @@ async function handleNews(body, reply) {
   }
 
   try {
-    const { digest, sources, searchHtml } = await generateDigest(env('GEMINI_API_KEY'), day);
+    const { digest, sources, searchHtml } = await generateDigest(ai, day);
     const { data: saved, error: e } = await admin.from('daily_news')
       .update({ status: 'ready', data: digest, sources, search_html: searchHtml, error: null, updated_at: new Date().toISOString() })
       .eq('day', day).select('*').single();
@@ -482,10 +582,7 @@ Deno.serve(async (req) => {
 
   let body = {};
   try { body = await req.json(); } catch {}
-  if (body?.action === 'news') {
-    if (!env('GEMINI_API_KEY')) return reply(501, { error: 'Current affairs need GEMINI_API_KEY (Google Search grounding).' });
-    return handleNews(body, reply);
-  }
+  if (body?.action === 'news') return handleNews(body, reply, { provider, key, model });
   let messages;
   try {
     messages = buildMessages(body?.task, body?.params || {});

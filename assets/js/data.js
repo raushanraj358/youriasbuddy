@@ -161,9 +161,11 @@ export const SAMPLE_QUIZ = [
   },
 ];
 
+// Level Up IAS daily current-affairs category (verified 22 Nov 2026).
+export const LEVELUP_IAS = { currentAffairs: 'https://www.levelupias.com/category/currentaffairs/' };
+
 // Vision IAS current-affairs links (verified 21 Nov 2026). Monthly issues: the archive's year + month filters (month = issue month).
 export const VISION_IAS = {
-  newsToday: 'https://visionias.in/current-affairs/news-today',
   dailySummary: 'https://visionias.in/current-affairs/upsc-daily-news-summary',
   magazineArchive: 'https://visionias.in/current-affairs/monthly-magazine/archive',
   magazineMonth: (year, month) => `https://visionias.in/current-affairs/monthly-magazine/archive?year=${year}&month=${month}`,
