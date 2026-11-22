@@ -166,7 +166,6 @@ export const LEVELUP_IAS = { currentAffairs: 'https://www.levelupias.com/categor
 
 // Vision IAS current-affairs links (verified 21 Nov 2026). Monthly issues: the archive's year + month filters (month = issue month).
 export const VISION_IAS = {
-  dailySummary: 'https://visionias.in/current-affairs/upsc-daily-news-summary',
   magazineArchive: 'https://visionias.in/current-affairs/monthly-magazine/archive',
   magazineMonth: (year, month) => `https://visionias.in/current-affairs/monthly-magazine/archive?year=${year}&month=${month}`,
 };

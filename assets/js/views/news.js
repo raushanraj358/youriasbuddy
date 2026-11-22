@@ -1,11 +1,10 @@
 // Current Affairs: hand-picked daily sources for UPSC news (links only; nothing is generated here).
 import { icon } from '../icons.js';
 import { esc, fmtDate } from '../utils.js';
-import { VISION_IAS, LEVELUP_IAS } from '../data.js';
+import { LEVELUP_IAS } from '../data.js';
 
 const DAILY = [
   { title: 'Level Up IAS · Current Affairs', desc: 'Daily UPSC-focused current affairs, organised by topic.', url: LEVELUP_IAS.currentAffairs },
-  { title: 'Vision IAS · Daily News Summary', desc: 'The day\'s important news for Prelims and Mains in one place.', url: VISION_IAS.dailySummary },
   { title: 'Indian Express · UPSC Essentials', desc: 'Key terms and concepts in the news, explained for aspirants.', url: 'https://indianexpress.com/section/upsc-current-affairs/' },
 ];
 const PRIMARY = [
@@ -35,7 +34,6 @@ export function mount(el, _params, { setSub }) {
       <p class="hint">Pick one daily source and stick to it. Make short notes and link each story to the static syllabus.</p>
       <div class="row wrap" style="margin-top:14px">
         <a class="btn accent" href="${LEVELUP_IAS.currentAffairs}" target="_blank" rel="noopener">${icon('external', 15)} Level Up IAS current affairs</a>
-        <a class="btn" href="${VISION_IAS.dailySummary}" target="_blank" rel="noopener">${icon('external', 15)} Vision IAS daily summary</a>
         <a class="btn ghost" href="#/magazines">${icon('book', 15)} Monthly magazines</a>
       </div>
     </section>

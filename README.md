@@ -15,7 +15,7 @@ No install and no build step. It's a static web app on GitHub Pages (custom doma
 | **Study Hours** | Pomodoro + stopwatch (survives reloads), manual logging, 14-day chart vs target, subject split, 6-month heatmap, session history |
 | **Reminders** | Once / daily / weekdays / weekly reminders, presets, browser notifications + chime |
 | **Study Material** | The UPSC CSE syllabus by paper → subject → topic. Track each topic (Not started / Reading / Done / Revised), generate AI study notes (English or हिन्दी) with Prelims pointers, Mains angles and PYQ themes, save them to Notes, quiz yourself on the topic, see recommended sources, add your own topics (e.g. for your optional) |
-| **Current Affairs** | Hand-picked daily sources for UPSC news: **Level Up IAS current affairs**, Vision IAS Daily News Summary, Indian Express UPSC Essentials, PIB, The Hindu and PRS |
+| **Current Affairs** | Hand-picked daily sources for UPSC news: **Level Up IAS current affairs**, Indian Express UPSC Essentials, PIB, The Hindu and PRS |
 | **Magazines** | Month-by-month links to the **Vision IAS Monthly Current Affairs Magazine** (each opens that issue in Vision IAS's archive), with "mark read" tracking that syncs to your account, plus Yojana/Kurukshetra and Down To Earth. |
 | **AI Quiz** | **Prelims GS** (statement-based, pair matching, Statement-I/II), **CSAT** and **Mains** questions with answer frameworks + **AI answer evaluation**. English & हिन्दी, practice/exam modes, negative marking, mistake book → Notes, accuracy by subject |
 | **Notes** | Markdown notebook with highlights, subject filters, search, pinning, spaced revision (1-3-7-15-30-60 days), "Quiz me on this note" |
