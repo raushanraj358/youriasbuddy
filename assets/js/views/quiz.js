@@ -13,10 +13,11 @@ const MODES = {
   csat: { label: 'CSAT', desc: 'Paper II aptitude · +2.5 / −0.83', icon: 'calc', counts: [5, 10, 15], mark: 2.5, neg: 2.5 / 3 },
   mains: { label: 'Mains', desc: 'Write answers · AI evaluation', icon: 'pen', counts: [1, 2, 3, 5] },
 };
+export const OFFLINE_COUNTS = [5, 10, 15, 20, 25, 30];
 const LOADING_LINES = ['Scanning the syllabus…', 'Studying PYQ patterns…', 'Framing statements carefully…', 'Crafting tricky distractors…', 'Double-checking facts…', 'Writing explanations…'];
 
 // Module-level state survives navigation within the session.
-let cfg = { mode: 'prelims', subject: 'polity', topic: '', difficulty: 'UPSC standard', count: 10, language: 'en', patterns: [...PATTERNS], practice: false, context: '', contextTitle: '' };
+let cfg = { mode: 'prelims', subject: 'polity', topic: '', difficulty: 'UPSC standard', count: 10, language: 'en', patterns: [...PATTERNS], practice: false, context: '', contextTitle: '', offlineCount: 10 };
 let phase = 'setup'; // setup | loading | play | result | mains
 let session = null;
 let lastError = null;
@@ -34,6 +35,7 @@ export function mount(el, params) {
     }
   }
   if (params.topic) { cfg.topic = params.topic; phase = 'setup'; }
+  if (OFFLINE_COUNTS.includes(Number(params.n))) cfg.offlineCount = Number(params.n);
   if (params.subject === 'csat') { cfg.mode = 'csat'; if (!MODES.csat.counts.includes(cfg.count)) cfg.count = 10; }
   else if (params.subject && SUBJECTS.some((s) => s.id === params.subject)) {
     cfg.subject = params.subject;
@@ -90,9 +92,15 @@ export function mount(el, params) {
 
           <div class="row wrap">
             <button class="btn accent lg" data-generate>${icon('sparkles', 17)} Generate ${cfg.mode === 'mains' ? 'Mains questions' : 'quiz'}</button>
-            ${cfg.mode !== 'mains' ? `<button class="btn lg" data-offline>${icon('book', 17)} Offline quiz</button>` : ''}
           </div>
-          ${cfg.mode !== 'mains' ? `<p class="hint" style="margin-top:-8px">Offline quiz: no AI needed. Pick a topic for its question set, or leave it blank to mix questions from the whole ${cfg.mode === 'csat' ? 'CSAT syllabus' : 'subject'}.</p>` : ''}
+          ${cfg.mode !== 'mains' ? `
+          <div class="offline-box">
+            <div class="offline-head"><span class="mc-ico">${icon('book', 17)}</span><div><b>Offline quiz</b><span class="hint">No AI needed. ${cfg.topic ? `Questions from <b>${esc(cfg.topic)}</b>.` : `Pick a topic above, or leave it blank to mix questions from the whole ${cfg.mode === 'csat' ? 'CSAT syllabus' : 'subject'}.`}</span></div></div>
+            <div class="row wrap" style="gap:12px">
+              <div class="seg" role="group" aria-label="Number of offline questions">${OFFLINE_COUNTS.map((n) => `<button class="${cfg.offlineCount === n ? 'on' : ''}" data-ocount="${n}">${n}</button>`).join('')}</div>
+              <button class="btn primary" data-offline>${icon('play', 15)} Start ${cfg.offlineCount}-question set</button>
+            </div>
+          </div>` : ''}
         </div>
       </div>
       ${statsPanel()}
@@ -203,13 +211,14 @@ export function mount(el, params) {
     const sub = cfg.mode === 'csat' ? 'csat' : cfg.subject;
     let pool = await offlineQuestions(sub, cfg.topic);
     if (!el.isConnected || phase !== 'setup') return; // navigated away while the bank loaded
-    const onTopic = cfg.topic && pool.length && pool.every((q) => q.concept === cfg.topic);
+    const onTopic = Boolean(cfg.topic && pool.length && pool.every((q) => q.concept === cfg.topic));
     if (!pool.length) {
       pool = SAMPLE_QUIZ.filter((q) => (cfg.mode === 'csat') === (q.subject === 'csat')).map((q) => ({ passage: '', concept: '', ...q }));
       toast('No offline questions for this subject yet', 'info', 'Here is a mixed sample quiz instead.');
     } else if (cfg.topic && !onTopic) toast('No offline set for this topic yet', 'info', `Mixing questions from across ${subjectById(sub).short}.`);
-    pool = shuffle(pool);
-    if (!onTopic) pool = pool.slice(0, cfg.count);
+    const want = cfg.offlineCount;
+    if (pool.length < want && pool[0]?.concept) toast(`This set has ${pool.length} questions`, 'info', `You asked for ${want}; here are all of them.`);
+    pool = shuffle(pool).slice(0, want);
     lastError = null;
     startMCQ(pool, true);
     if (!onTopic) session.meta.topic = '';
@@ -459,6 +468,7 @@ export function mount(el, params) {
       draw();
     } else if ('clearContext' in d) { cfg.context = ''; cfg.contextTitle = ''; draw(); }
     else if ('generate' in d) generate();
+    else if (d.ocount) { cfg.offlineCount = Number(d.ocount); draw(); }
     else if ('offline' in d) startOffline(); else if ('cancel' in d) { controller?.abort(); }
     else if (d.opt !== undefined) {
       session.answers[session.cur] = Number(d.opt);

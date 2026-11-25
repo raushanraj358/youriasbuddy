@@ -7,6 +7,7 @@ import { runAI, hasAI, friendlyError, AIError } from '../ai.js';
 import { toast, confirmDialog } from '../ui.js';
 import { md } from '../md.js';
 import { keyNotes, keyNotesMarkdown } from '../content.js';
+import { OFFLINE_COUNTS } from './quiz.js';
 
 const STATUSES = [
   { id: '', label: 'Not started', color: 'var(--muted)' },
@@ -283,7 +284,8 @@ export function mount(el, params, { setSub }) {
           <div class="card-head"><h3>${icon('target', 17)} Practise</h3></div>
           <div class="stack" style="gap:8px">
             <a class="btn block" href="#/quiz?subject=${encodeURIComponent(sub === 'csat' ? 'csat' : sub)}&topic=${encodeURIComponent(topic)}">${icon('sparkles', 15)} AI quiz on this topic</a>
-            ${sub !== 'essay' && sub !== 'optional' ? `<a class="btn block" href="#/quiz?subject=${encodeURIComponent(sub)}&topic=${encodeURIComponent(topic)}&offline=1">${icon('book', 15)} Offline quiz (no AI)</a>` : ''}
+            ${sub !== 'essay' && sub !== 'optional' ? `<div class="offline-pick"><span class="label">${icon('book', 14)} Offline quiz (no AI): how many questions?</span>
+              <div class="offline-counts">${OFFLINE_COUNTS.map((n) => `<a class="chip" href="#/quiz?subject=${encodeURIComponent(sub)}&topic=${encodeURIComponent(topic)}&offline=1&n=${n}">${n}</a>`).join('')}</div></div>` : ''}
             <a class="btn block" href="#/study?subject=${encodeURIComponent(sub)}&start=1">${icon('timer', 15)} Start a focus session</a>
           </div>
         </div>

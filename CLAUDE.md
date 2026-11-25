@@ -37,7 +37,7 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
   providers.js Gemini (Auto model fallback chain) + OpenAI adapters; shared with the Edge Function
   data.js      SUBJECTS, SYLLABUS (subject → topics), LIBRARY, HABITS, TIPS, SAMPLE_QUIZ
   content.js   static key notes per topic, lazy-loaded from content/<subjectId>.js (keyed by exact SYLLABUS topic name)
-  quizbank.js  offline MCQs per topic (5 each), lazy-loaded from quizbank/<subjectId>.js; shorthand format documented in the file
+  quizbank.js  offline MCQs (30 per topic), lazy-loaded from quizbank/<subjectId>.js + parts <subjectId>-2.js… (count in PARTS); format documented in the file
   config.js    public site config (Supabase URL/key, feature flags, display-only AI limits)
 ```
 
@@ -88,7 +88,8 @@ index.html → assets/js/app.js (router, nav, onboarding, timers, boot)
 - Subject ids (`polity`, `history`, …) are stored in user data. Don't rename them. Adding topics to `SYLLABUS` is safe; renaming a topic
   orphans its saved status/notes. When you add or rename a topic, add or rename its entry in `assets/js/content/<subjectId>.js` too
   (`{ overview, sections: [[title, [points]]], prelims, mains, traps }`; avoid `=` in traps, they're wrapped in `==mark==`).
-  Do the same in `assets/js/quizbank/<subjectId>.js` (offline quiz questions). Essay and Optional have no question bank.
+  Do the same in `assets/js/quizbank/<subjectId>*.js` (offline quiz questions, 30 per topic). Essay and Optional have no question bank.
+  If you add a part file, bump that subject in `PARTS` in quizbank.js, or it won't load.
   `quizbank/current.js` holds only slow-changing facts; review it every few months.
 - UI copy: short, calm, encouraging; Indian English; dates via `fmtDate` (en-IN). Hindi output is supported for AI tasks (`language: 'hi'`).
 - Styling: use the existing CSS tokens/classes in `assets/css/styles.css` (`card`, `btn`, `chip`, `seg`, `tag`, `notice`, `list/li`,

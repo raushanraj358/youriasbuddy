@@ -808,3 +808,13 @@ a.chip { text-decoration: none; }
 .social-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(0, 0, 0, .45); }
 @media (max-width: 900px) { .contact-grid { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .contact-hero { padding: 20px; } .contact-hero h2 { font-size: 25px; } .contact-row { grid-template-columns: 1fr; } }
+
+/* ---------- Offline quiz picker ---------- */
+.offline-box { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 16px; border: 1px dashed var(--line-2); background: var(--surface-2); }
+.offline-head { display: flex; gap: 12px; align-items: flex-start; }
+.offline-head > div { display: flex; flex-direction: column; gap: 2px; }
+.offline-head .mc-ico { flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.offline-pick { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.offline-pick .label { display: inline-flex; align-items: center; gap: 6px; }
+.offline-counts { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.offline-counts .chip { justify-content: center; text-decoration: none; }

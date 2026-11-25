@@ -17,7 +17,7 @@ const FAQS = () => [
   },
   {
     id: 'quiz', title: 'Quizzes & study material', icon: 'target', items: [
-      ['What is the offline quiz?', 'A ready-made question bank with **5 Prelims-style questions on every syllabus topic**, written from standard sources (NCERT, Laxmikanth, government documents). It needs no AI and no API key. Open **Quiz → Offline quiz**, or use **Offline quiz (no AI)** on any topic page in Study Material.'],
+      ['What is the offline quiz?', 'A ready-made question bank with **30 Prelims-style questions on every syllabus topic** (over 3,700 in all), written from standard sources (NCERT, Laxmikanth, government documents). It needs no AI and no API key. Choose a set of **5, 10, 15, 20, 25 or 30 questions** under **Quiz → Offline quiz**, or from the counts shown on any topic page in Study Material. Questions and answer options are shuffled each time.'],
       ['How is the quiz scored?', 'Prelims GS questions carry **+2** for a correct answer and **−0.66** (one-third) for a wrong one. CSAT carries **+2.5 / −0.83**. Unattempted questions score zero, just like the real exam.'],
       ['What is the difference between practice mode and exam mode?', 'In **practice mode** you see the answer and explanation right after each question. In **exam mode** you answer everything first, can mark questions for review, and see the full analysis after you submit.'],
       ['Where do my mistakes go?', 'After a quiz, tap **Save mistakes to Notes**. Your wrong and skipped questions become a note that is scheduled for revision the next day.'],
