@@ -18,6 +18,8 @@ import * as profile from './views/profile.js';
 import * as syllabus from './views/syllabus.js';
 import * as news from './views/news.js';
 import * as magazines from './views/magazines.js';
+import * as faq from './views/faq.js';
+import * as contact from './views/contact.js';
 import { initCloud, cloud, onCloudChange } from './cloud.js';
 
 const ROUTES = {
@@ -28,11 +30,13 @@ const ROUTES = {
   news: { title: 'Current Affairs', icon: 'globe', view: news, group: 'Learn', tab: 'News', sub: 'Today\'s UPSC-relevant news, from trusted sources' },
   magazines: { title: 'Magazines', icon: 'file', view: magazines, group: 'Learn', sub: 'Monthly current affairs magazines' },
   syllabus: { title: 'Study Material', icon: 'book', view: syllabus, group: 'Learn', tab: 'Study', sub: 'The UPSC CSE syllabus, topic by topic, with study notes' },
-  quiz: { title: 'AI Quiz', icon: 'sparkles', view: quiz, group: 'Learn', tab: 'Quiz', sub: 'UPSC Prelims & Mains practice, generated on any topic' },
+  quiz: { title: 'Quiz', icon: 'sparkles', view: quiz, group: 'Learn', tab: 'Quiz', sub: 'UPSC Prelims & Mains practice: AI-generated on any topic, or offline sets for every syllabus topic' },
   notes: { title: 'Notes', icon: 'notes', view: notes, group: 'Learn', tab: 'Notes', sub: 'Your notebook with spaced revision' },
   resources: { title: 'Resources', icon: 'library', view: resources, group: 'Learn', sub: 'Curated sources and your own reading list' },
   profile: { title: 'Profile', icon: 'user', view: profile, group: 'You', sub: 'Your account, goal and journey so far' },
   settings: { title: 'Settings', icon: 'settings', view: settings, group: 'You', sub: 'AI, appearance and data' },
+  contact: { title: 'Contact', icon: 'mail', view: contact, group: 'You', sub: 'Feedback, issues and ideas: we read every message' },
+  faq: { title: 'FAQs', icon: 'info', view: faq, group: 'You', sub: 'Answers about the app, your data and the UPSC exam' },
 };
 
 /* ---------- Navigation ---------- */

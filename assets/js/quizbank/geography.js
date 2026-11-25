@@ -1,0 +1,81 @@
+// Offline MCQs: Geography. Keys must match SYLLABUS.geography in data.js exactly. Format: see ../quizbank.js.
+// Sources: NCERT Class XI–XII geography, G.C. Leong, Census of India 2011, IMD.
+export const QUESTIONS = {
+  'Geomorphology & landforms': [
+    { q: 'The Himalayas are an example of:', o: ['block mountains', 'fold mountains', 'volcanic mountains', 'residual mountains'], a: 1, e: 'They were formed by the folding of sediments as the Indian plate collided with the Eurasian plate. The Vosges and Black Forest are block mountains; the Aravallis are residual.' },
+    { q: 'Consider the following pairs (landform : agent):', s: ['Mushroom rock : wind erosion', 'Cirque : glacial erosion', 'Ox-bow lake : river action'], o: 'P3', a: 2, e: 'All three are correctly matched.' },
+    { q: 'Consider the following statements:', s: ['The Narmada and the Tapi flow westward through rift valleys.', 'The horns of a barchan sand dune point upwind.'], o: 'C2', a: 0, e: 'Barchans are crescent-shaped dunes whose horns point downwind.' },
+    { q: 'Karst topography develops mainly through:', o: ['weathering of granite', 'dissolution of limestone by water', 'glacial deposition', 'deposition by wind'], a: 1, e: 'Water containing carbon dioxide dissolves limestone and forms sinkholes, caves, stalactites and stalagmites.' },
+    { q: 'Exfoliation, where outer layers of rock peel off due to repeated heating and cooling, is a form of:', o: ['chemical weathering', 'biological weathering', 'physical (mechanical) weathering', 'mass wasting'], a: 2, e: 'Exfoliation is common in hot deserts with large daily temperature ranges.' },
+  ],
+  'Climatology & Indian monsoon': [
+    { q: 'Consider the following statements:', s: ['El Niño is the abnormal warming of the central and eastern equatorial Pacific Ocean.', 'El Niño years are generally associated with a weaker monsoon in India.'], o: 'C2', a: 2, e: 'Both are correct, though not every El Niño year brings a drought. A positive Indian Ocean Dipole can offset its effect.' },
+    { q: 'A positive Indian Ocean Dipole (IOD) means:', o: ['the western Indian Ocean is warmer than the eastern part, which generally helps the Indian monsoon', 'the eastern Indian Ocean is warmer than the western part, which helps the monsoon', 'the Pacific is warmer than the Indian Ocean', 'sea level is rising in the Bay of Bengal'], a: 0, e: 'In a positive IOD, warmer waters near Africa and cooler waters near Indonesia tend to strengthen the Indian monsoon.' },
+    { q: 'Consider the following pairs (local wind or shower : region):', s: ['Mango showers : Kerala and Karnataka', 'Kalbaisakhi : West Bengal', 'Loo : Tamil Nadu'], o: 'P3', a: 1, e: 'The Loo is a hot, dry summer wind of the northern plains, especially Punjab, Haryana, Uttar Pradesh and Bihar.' },
+    { q: 'The Coromandel coast of Tamil Nadu receives most of its rainfall during:', o: ['June to September', 'October to December', 'March to May', 'January and February'], a: 1, e: 'Tamil Nadu lies in the rain shadow of the south-west monsoon and gets most of its rain from the retreating (north-east) monsoon.' },
+    { q: 'Western disturbances bring winter rainfall mainly to:', o: ['Tamil Nadu', 'north-east India', 'north-west India', 'the Odisha coast'], a: 2, e: 'These low-pressure systems come from the Mediterranean region. The winter rain they bring helps the rabi wheat crop.' },
+  ],
+  'Oceanography & currents': [
+    { q: 'Consider the following pairs (ocean current : nature):', s: ['Gulf Stream : warm', 'Labrador Current : cold', 'Kuroshio Current : warm', 'Canary Current : warm'], o: 'P4', a: 2, e: 'The Canary Current, off north-west Africa, is a cold current.' },
+    { q: 'Which of these water bodies has the highest salinity?', o: ['Baltic Sea', 'Red Sea', 'Bay of Bengal', 'Arctic Ocean'], a: 1, e: 'The Red Sea is very saline because of high evaporation and little freshwater inflow. The Baltic has low salinity due to river inflow and low evaporation.' },
+    { q: 'Spring tides occur:', o: ['at new moon and full moon, when the Sun, Moon and Earth are in a line', 'at the first and third quarters of the Moon', 'only during solar eclipses', 'when the Moon is farthest from the Earth'], a: 0, e: 'When the Sun and Moon pull in a line, tides are highest. Neap tides occur at the quarter phases, when they pull at right angles.' },
+    { q: 'Consider the following statements about coral reefs:', s: ['Corals grow best in warm, clear and shallow water.', 'Coral bleaching happens when heat stress makes corals expel their symbiotic algae (zooxanthellae).'], o: 'C2', a: 2, e: 'Both are correct. Without the algae, corals lose colour and their main food source.' },
+    { q: 'The Mariana Trench, the deepest known point in the oceans, is in the:', o: ['Atlantic Ocean', 'Indian Ocean', 'Pacific Ocean', 'Arctic Ocean'], a: 2, e: 'The Challenger Deep in the Mariana Trench (western Pacific) is about 11 km deep.' },
+  ],
+  'Physiography of India': [
+    { q: 'The highest peak in peninsular India is:', o: ['Doddabetta', 'Anamudi', 'Mahendragiri', 'Guru Shikhar'], a: 1, e: 'Anamudi (2,695 m), in the Anaimalai hills of Kerala, is the highest peak south of the Himalayas.' },
+    { q: 'Consider the following pairs:', s: ['Shiwaliks : outermost range of the Himalayas', 'Himadri : Greater Himalaya', 'Himachal : Lesser Himalaya'], o: 'P3', a: 2, e: 'All three are correctly matched.' },
+    { q: 'Consider the following statements about the northern plains:', s: ['The Bhabar is a narrow belt of pebbles at the foothills where streams disappear underground.', 'The Terai is a marshy belt to the south of the Bhabar.', 'Khadar is the older alluvium found above the flood level.'], o: 'C3', a: 0, e: 'Khadar is the newer alluvium of the flood plains. The older alluvium above flood level is called Bhangar.' },
+    { q: 'The highest peak of the Aravalli range is:', o: ['Guru Shikhar', 'Dhupgarh', 'Anamudi', 'Mahendragiri'], a: 0, e: 'Guru Shikhar (about 1,722 m) is at Mount Abu, Rajasthan. Dhupgarh is the highest point of the Satpura range.' },
+    { q: 'India\'s only active volcano is on:', o: ['Narcondam Island', 'Car Nicobar', 'Barren Island', 'Havelock Island'], a: 2, e: 'Barren Island in the Andaman Sea is an active volcano. Narcondam is considered dormant.' },
+  ],
+  'Drainage systems & rivers': [
+    { q: 'Which of these rivers flows west into the Arabian Sea?', o: ['Mahanadi', 'Godavari', 'Tapi', 'Krishna'], a: 2, e: 'The Narmada and the Tapi are the main west-flowing peninsular rivers. The others flow east into the Bay of Bengal.' },
+    { q: 'Consider the following pairs (name of the Brahmaputra : region):', s: ['Tsangpo : Tibet', 'Dihang : Arunachal Pradesh', 'Jamuna : Bangladesh'], o: 'P3', a: 2, e: 'All three are correct.' },
+    { q: 'Consider the following statements about the Indus Waters Treaty, 1960:', s: ['India got the full use of the eastern rivers: the Ravi, Beas and Sutlej.', 'The treaty was brokered by the United Nations.'], o: 'C2', a: 0, e: 'The World Bank brokered the treaty. Pakistan got the western rivers (Indus, Jhelum and Chenab), with limited use allowed to India.' },
+    { q: 'The largest peninsular river, also called the "Dakshin Ganga", is the:', o: ['Krishna', 'Godavari', 'Kaveri', 'Mahanadi'], a: 1, e: 'The Godavari rises at Trimbakeshwar near Nashik and has the largest basin among peninsular rivers.' },
+    { q: 'The Alaknanda and the Bhagirathi meet to form the Ganga at:', o: ['Rudraprayag', 'Karnaprayag', 'Devprayag', 'Vishnuprayag'], a: 2, e: 'The two rivers join at Devprayag in Uttarakhand.' },
+  ],
+  'Soils & natural vegetation': [
+    { q: 'Consider the following statements about black (regur) soil:', s: ['It is formed from the weathering of basalt.', 'It holds moisture well.', 'It is well suited for cotton.'], o: 'C3', a: 3, e: 'All three are correct. Black soil covers much of the Deccan plateau.' },
+    { q: 'Laterite soil develops in areas with:', o: ['high temperature and heavy rainfall', 'low rainfall and high temperature', 'cold and dry conditions', 'river deltas only'], a: 0, e: 'Heavy rain leaches away silica and nutrients, leaving iron and aluminium oxides. Laterite soil is poor in nitrogen and humus.' },
+    { q: 'The red colour of red soil is due to the presence of:', o: ['aluminium', 'iron oxide', 'humus', 'calcium carbonate'], a: 1, e: 'Iron diffused through crystalline and metamorphic rocks gives red soil its colour. It looks yellow when hydrated.' },
+    { q: 'Which forest type covers the largest area in India?', o: ['Tropical evergreen forests', 'Tropical deciduous forests', 'Montane forests', 'Tropical thorn forests'], a: 1, e: 'Tropical deciduous (monsoon) forests are the most widespread. Teak and sal are typical species.' },
+    { q: 'Consider the following statements:', s: ['The Sundarbans is the largest mangrove forest in the world.', 'Mangroves grow mainly in freshwater lakes.'], o: 'C2', a: 0, e: 'Mangroves grow in saline coastal and estuarine waters. The Sundarbans spans India and Bangladesh.' },
+  ],
+  'Agriculture & cropping patterns': [
+    { q: 'Which of the following is a rabi crop?', o: ['Rice', 'Cotton', 'Jute', 'Wheat'], a: 3, e: 'Rabi crops are sown in winter and harvested in spring: wheat, mustard, gram and barley. Rice, cotton and jute are kharif crops.' },
+    { q: 'The zaid cropping season falls:', o: ['between the rabi and kharif seasons, in summer', 'at the start of the south-west monsoon', 'in winter, after the kharif harvest', 'only in the north-east'], a: 0, e: 'Zaid crops such as watermelon, cucumber and fodder are grown in the short summer season.' },
+    { q: '"Jhum" cultivation, practised in north-east India, is a form of:', o: ['terrace farming', 'shifting (slash-and-burn) cultivation', 'plantation farming', 'dry farming'], a: 1, e: 'Forest patches are cleared and burnt, farmed for a few years, then left to recover.' },
+    { q: 'Consider the following statements about tea:', s: ['It grows well on well-drained hill slopes with heavy rainfall.', 'Assam is the largest producer of tea in India.'], o: 'C2', a: 2, e: 'Both are correct. Waterlogging harms tea roots, so slopes are preferred.' },
+    { q: 'Consider the following statements about the Green Revolution:', s: ['Its early success was mostly in wheat.', 'It began mainly in eastern India.'], o: 'C2', a: 0, e: 'It began in Punjab, Haryana and western Uttar Pradesh, using high-yielding wheat varieties, irrigation and fertilisers.' },
+  ],
+  'Minerals, energy & industries': [
+    { q: 'Consider the following pairs (site : mineral):', s: ['Jharia : coal', 'Kudremukh : iron ore', 'Khetri : bauxite'], o: 'P3', a: 1, e: 'Khetri in Rajasthan is known for copper.' },
+    { q: 'Monazite sands, a source of thorium, are found mainly along the:', o: ['Kerala coast', 'Gujarat coast', 'Thar desert', 'Chhota Nagpur plateau'], a: 0, e: 'The beach sands of Kerala (and parts of Tamil Nadu and Odisha) are rich in monazite.' },
+    { q: 'Which of the following is NOT a ferrous mineral?', o: ['Iron ore', 'Manganese', 'Bauxite', 'Chromite'], a: 2, e: 'Bauxite is the ore of aluminium, a non-ferrous metal.' },
+    { q: 'India\'s first nuclear power station was set up at:', o: ['Kalpakkam', 'Tarapur', 'Kudankulam', 'Rawatbhata'], a: 1, e: 'Tarapur in Maharashtra began operation in 1969.' },
+    { q: 'Consider the following statements about coal in India:', s: ['Gondwana coal makes up most of India\'s coal reserves.', 'Tertiary coal is found mainly in the north-east.'], o: 'C2', a: 2, e: 'Both are correct. Gondwana coal lies mainly in the Damodar, Mahanadi and Godavari valleys.' },
+  ],
+  'Mapping: places in news': [
+    { q: 'Which strait separates India from Sri Lanka?', o: ['Strait of Malacca', 'Palk Strait', 'Ten Degree Channel', 'Strait of Hormuz'], a: 1, e: 'The Palk Strait lies between Tamil Nadu and northern Sri Lanka.' },
+    { q: 'The Ten Degree Channel separates:', o: ['the Andaman Islands from the Nicobar Islands', 'Lakshadweep from the Maldives', 'India from Sri Lanka', 'Little Andaman from South Andaman'], a: 0, e: 'The Eight Degree Channel separates Minicoy (Lakshadweep) from the Maldives; the Nine Degree Channel separates Minicoy from the rest of Lakshadweep.' },
+    { q: 'Consider the following pairs (strait : water bodies it connects):', s: ['Strait of Hormuz : Persian Gulf and Gulf of Oman', 'Bab-el-Mandeb : Red Sea and Gulf of Aden', 'Strait of Malacca : Andaman Sea and South China Sea', 'Bosphorus : Black Sea and Sea of Marmara'], o: 'P4', a: 3, e: 'All four are correctly matched. These are key chokepoints for global trade and energy.' },
+    { q: 'Which of the following countries does NOT share a border with Afghanistan?', o: ['Tajikistan', 'Turkmenistan', 'Kazakhstan', 'Iran'], a: 2, e: 'Afghanistan borders Pakistan, Iran, Turkmenistan, Uzbekistan, Tajikistan and China. Kazakhstan does not touch it.' },
+    { q: 'Which of these States does NOT share a border with Bangladesh?', o: ['Meghalaya', 'Mizoram', 'Tripura', 'Manipur'], a: 3, e: 'The five States bordering Bangladesh are West Bengal, Assam, Meghalaya, Tripura and Mizoram.' },
+  ],
+  'Earthquakes, cyclones & hazards': [
+    { q: 'Consider the following statements:', s: ['The Richter scale measures the magnitude of an earthquake.', 'The Mercalli scale measures the intensity of an earthquake, based on observed effects.'], o: 'C2', a: 2, e: 'Both are correct. Magnitude is the energy released; intensity is the damage and shaking felt at a place.' },
+    { q: 'Consider the following statements about tropical cyclones:', s: ['They need sea-surface temperatures above about 27°C.', 'They often form right at the equator.'], o: 'C2', a: 0, e: 'The Coriolis force is almost zero at the equator, so cyclones rarely form within about 5° of it.' },
+    { q: 'In the north Indian Ocean, tropical cyclones are more frequent in:', o: ['the Arabian Sea', 'the Bay of Bengal', 'both equally', 'neither; they form only over land'], a: 1, e: 'The Bay of Bengal is warmer and gets remnants of Pacific systems, so it sees more cyclones than the Arabian Sea.' },
+    { q: 'Consider the following statements about seismic waves:', s: ['P-waves can travel through solids, liquids and gases.', 'S-waves cannot travel through liquids.'], o: 'C2', a: 2, e: 'Both are correct. The S-wave shadow zone showed that the Earth\'s outer core is liquid.' },
+    { q: 'The Regional Specialised Meteorological Centre that names tropical cyclones over the north Indian Ocean is located in:', o: ['Tokyo', 'New Delhi', 'Colombo', 'Dhaka'], a: 1, e: 'IMD\'s RSMC New Delhi names cyclones in turn from a list contributed by the member countries of the WMO/ESCAP Panel.' },
+  ],
+  'Population & settlement geography': [
+    { q: 'According to Census 2011, India\'s sex ratio was:', o: ['933', '940', '943', '950'], a: 2, e: 'The sex ratio was 943 females per 1,000 males in 2011, up from 933 in 2001.' },
+    { q: 'Consider the following statements about Census 2011:', s: ['Uttar Pradesh was the most populous State.', 'Sikkim was the least populous State.'], o: 'C2', a: 2, e: 'Both are correct.' },
+    { q: 'Which State had the highest population density in Census 2011?', o: ['Bihar', 'West Bengal', 'Kerala', 'Uttar Pradesh'], a: 0, e: 'Bihar had 1,106 persons per sq km. Among all States and UTs, Delhi was the highest.' },
+    { q: 'Which State had the highest sex ratio in Census 2011?', o: ['Tamil Nadu', 'Kerala', 'Goa', 'Manipur'], a: 1, e: 'Kerala had 1,084 females per 1,000 males. It also had the highest literacy rate.' },
+    { q: 'The term "demographic dividend" refers to:', o: ['a rise in the working-age share of the population that can boost economic growth', 'a fall in the birth rate to zero', 'cash transfers to large families', 'the growth of urban slums'], a: 0, e: 'A larger share of people aged 15–64 can raise growth, but only with jobs, skills and good health.' },
+  ],
+};

@@ -17,10 +17,12 @@ No install and no build step. It's a static web app on GitHub Pages (custom doma
 | **Study Material** | The UPSC CSE syllabus by paper → subject → topic. Track each topic (Not started / Reading / Done / Revised), generate AI study notes (English or हिन्दी) with Prelims pointers, Mains angles and PYQ themes, save them to Notes, quiz yourself on the topic, see recommended sources, add your own topics (e.g. for your optional) |
 | **Current Affairs** | Hand-picked daily sources for UPSC news: **Level Up IAS current affairs**, Indian Express UPSC Essentials, PIB, The Hindu and PRS |
 | **Magazines** | Month-by-month links to the **Vision IAS Monthly Current Affairs Magazine** (each opens that issue in Vision IAS's archive), with "mark read" tracking that syncs to your account, plus Yojana/Kurukshetra and Down To Earth. |
-| **AI Quiz** | **Prelims GS** (statement-based, pair matching, Statement-I/II), **CSAT** and **Mains** questions with answer frameworks + **AI answer evaluation**. English & हिन्दी, practice/exam modes, negative marking, mistake book → Notes, accuracy by subject |
+| **Quiz** | **Offline quiz** with 5 ready-made questions on every syllabus topic (no AI needed), plus AI-generated **Prelims GS** (statement-based, pair matching, Statement-I/II), **CSAT** and **Mains** questions with answer frameworks + **AI answer evaluation**. English & हिन्दी, practice/exam modes, negative marking, mistake book → Notes, accuracy by subject |
 | **Notes** | Markdown notebook with highlights, subject filters, search, pinning, spaced revision (1-3-7-15-30-60 days), "Quiz me on this note" |
 | **Resources** | Curated library (UPSC, NCERT, PIB, PRS, standard books…) with progress tracking, plus your own links/books/videos |
 | **Profile** | Continue with Google to save and sync progress across devices. Goal & exam date, lifetime stats, hours and quiz accuracy by subject, syllabus covered, recent activity |
+| **Contact** | Feedback, issue reports, feature ideas and content corrections (opens the visitor's email app pre-filled to youriasbuddy@gmail.com), plus Instagram and X links |
+| **FAQs** | Searchable answers about the app, AI limits, data and sync, and the UPSC exam pattern |
 | **Settings** | AI (built-in free AI, or your own Gemini/OpenAI key), theme & sound, JSON backup/restore |
 
 **No account needed.** Guests can use everything, and their data stays in the browser (localStorage). Signing in saves the same data

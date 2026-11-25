@@ -124,7 +124,7 @@ export function mount(el, _p, { setSub }) {
         <div class="quick-links" style="grid-template-columns:1fr 1fr">
           ${[
             ['study?start=1', 'timer', 'Focus', 'Pomodoro / stopwatch', 'var(--accent-soft)', 'var(--accent)'],
-            ['quiz', 'sparkles', 'AI Quiz', 'Prelims & Mains', 'var(--info-soft)', 'var(--info)'],
+            ['quiz', 'sparkles', 'Quiz', 'AI & offline practice', 'var(--info-soft)', 'var(--info)'],
             ['notes?new=1', 'edit', 'New note', 'Capture a topic', 'var(--good-soft)', 'var(--good)'],
             ['news', 'globe', 'Current affairs', 'Today\'s UPSC news', 'var(--warn-soft)', 'var(--warn)'],
           ].map(([h, i, b, s, bg, c]) => `<a class="ql" href="#/${h}"><span class="ql-ico" style="background:${bg};color:${c}">${icon(i, 19)}</span><b>${b}</b><span>${s}</span></a>`).join('')}

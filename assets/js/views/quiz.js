@@ -4,6 +4,7 @@ import { esc, uid, fmtClock, shuffle, wordCount, timeAgo, dateKey, addDays } fro
 import { SUBJECTS, SYLLABUS, SAMPLE_QUIZ, subjectById } from '../data.js';
 import { runAI, cleanMCQs, hasAI, friendlyError, AIError } from '../ai.js';
 import { toast, hbars, emptyState, ring } from '../ui.js';
+import { offlineQuestions } from '../quizbank.js';
 
 const DIFFICULTY = ['Foundation', 'Moderate', 'UPSC standard', 'Tough'];
 const PATTERNS = ['Statement-based', 'Pair matching', 'Statement-I / Statement-II', 'Direct'];
@@ -33,7 +34,11 @@ export function mount(el, params) {
     }
   }
   if (params.topic) { cfg.topic = params.topic; phase = 'setup'; }
-  if (params.subject && SUBJECTS.some((s) => s.id === params.subject)) cfg.subject = params.subject;
+  if (params.subject === 'csat') { cfg.mode = 'csat'; if (!MODES.csat.counts.includes(cfg.count)) cfg.count = 10; }
+  else if (params.subject && SUBJECTS.some((s) => s.id === params.subject)) {
+    cfg.subject = params.subject;
+    if (cfg.mode === 'csat') cfg.mode = 'prelims';
+  }
 
   const draw = () => {
     if (phase === 'setup') el.innerHTML = setupView();
@@ -81,12 +86,13 @@ export function mount(el, params) {
               <textarea class="textarea" id="qContext" rows="4" style="margin-top:8px" placeholder="Paste an editorial, PIB release or your notes — questions will be grounded in it.">${esc(cfg.context)}</textarea></details>`}
 
           ${lastError ? `<div class="notice">${icon('alert', 18)}<div style="flex:1">${esc(lastError.message)}${['NO_KEY', 'AUTH', 'MODEL', 'RATE'].includes(lastError.code) ? ` <a href="#/settings" style="font-weight:700">Open Settings →</a>` : ''}</div></div>`
-            : !aiReady ? `<div class="notice info">${icon('key', 18)}<div style="flex:1">To generate fresh questions on any topic, add a <b>free Google Gemini key</b> in <a href="#/settings" style="font-weight:700">Settings</a> (takes 1 minute). Meanwhile, try the offline sample quiz.</div></div>` : ''}
+            : !aiReady ? `<div class="notice info">${icon('key', 18)}<div style="flex:1">To generate fresh questions on any topic, add a <b>free Google Gemini key</b> in <a href="#/settings" style="font-weight:700">Settings</a> (takes 1 minute). Meanwhile, take an <b>offline quiz</b>: there are ready-made questions on every syllabus topic.</div></div>` : ''}
 
           <div class="row wrap">
             <button class="btn accent lg" data-generate>${icon('sparkles', 17)} Generate ${cfg.mode === 'mains' ? 'Mains questions' : 'quiz'}</button>
-            ${cfg.mode !== 'mains' ? `<button class="btn lg ghost" data-sample>Try sample quiz</button>` : ''}
+            ${cfg.mode !== 'mains' ? `<button class="btn lg" data-offline>${icon('book', 17)} Offline quiz</button>` : ''}
           </div>
+          ${cfg.mode !== 'mains' ? `<p class="hint" style="margin-top:-8px">Offline quiz: no AI needed. Pick a topic for its question set, or leave it blank to mix questions from the whole ${cfg.mode === 'csat' ? 'CSAT syllabus' : 'subject'}.</p>` : ''}
         </div>
       </div>
       ${statsPanel()}
@@ -127,7 +133,7 @@ export function mount(el, params) {
     const right = q.mode === 'mains' ? (q.maxScore ? `${q.score}/${q.maxScore}` : `${q.total} Q`) : `${q.correct}/${q.total}`;
     return `<button class="li" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;cursor:pointer" data-review="${q.id}" ${q.questions ? '' : 'disabled'}>
       <span class="dot" style="background:${s.color}"></span>
-      <div class="li-main"><div class="li-title">${esc(q.topic || s.short)}</div><div class="li-sub">${MODES[q.mode].label}${q.sample ? ' · sample' : ''} · ${timeAgo(q.at)}</div></div>
+      <div class="li-main"><div class="li-title">${esc(q.topic || s.short)}</div><div class="li-sub">${MODES[q.mode].label}${q.sample ? ' · offline' : ''} · ${timeAgo(q.at)}</div></div>
       <b>${right}</b></button>`;
   }
 
@@ -190,6 +196,25 @@ export function mount(el, params) {
       controller = null;
     }
     draw();
+  }
+
+  /** A quiz from the static question bank (works offline, no AI). */
+  async function startOffline() {
+    const sub = cfg.mode === 'csat' ? 'csat' : cfg.subject;
+    let pool = await offlineQuestions(sub, cfg.topic);
+    if (!el.isConnected || phase !== 'setup') return; // navigated away while the bank loaded
+    const onTopic = cfg.topic && pool.length && pool.every((q) => q.concept === cfg.topic);
+    if (!pool.length) {
+      pool = SAMPLE_QUIZ.filter((q) => (cfg.mode === 'csat') === (q.subject === 'csat')).map((q) => ({ passage: '', concept: '', ...q }));
+      toast('No offline questions for this subject yet', 'info', 'Here is a mixed sample quiz instead.');
+    } else if (cfg.topic && !onTopic) toast('No offline set for this topic yet', 'info', `Mixing questions from across ${subjectById(sub).short}.`);
+    pool = shuffle(pool);
+    if (!onTopic) pool = pool.slice(0, cfg.count);
+    lastError = null;
+    startMCQ(pool, true);
+    if (!onTopic) session.meta.topic = '';
+    draw();
+    window.scrollTo({ top: 0 });
   }
 
   function startMCQ(questions, sample) {
@@ -290,7 +315,7 @@ export function mount(el, params) {
       <div class="score-hero">
         ${ring(r.maxScore ? Math.max(0, r.score) / r.maxScore : 0, 150, 12, acc >= 60 ? 'var(--good)' : 'var(--accent)', `<span class="serif" style="font-size:38px;font-weight:400">${acc}%</span><br><span class="hint">accuracy</span>`)}
         <div class="stack" style="gap:14px">
-          <div><span class="eyebrow">${MODES[s.kind].label}${s.meta.topic ? ' · ' + esc(s.meta.topic) : ''}${s.sample ? ' · sample' : ''}</span>
+          <div><span class="eyebrow">${MODES[s.kind].label}${s.meta.topic ? ' · ' + esc(s.meta.topic) : ''}${s.sample ? ' · offline' : ''}</span>
           <div class="score-big">${r.score}<small> / ${r.maxScore}</small></div><p class="muted">${verdict} Negative marking applied.</p></div>
           <div class="kpis">
             <div class="kpi"><b style="color:var(--good)">${r.correct}</b><span>Correct</span></div>
@@ -434,11 +459,7 @@ export function mount(el, params) {
       draw();
     } else if ('clearContext' in d) { cfg.context = ''; cfg.contextTitle = ''; draw(); }
     else if ('generate' in d) generate();
-    else if ('sample' in d) {
-      const pool = cfg.mode === 'csat' ? SAMPLE_QUIZ.filter((q) => q.subject === 'csat') : SAMPLE_QUIZ.filter((q) => q.subject !== 'csat');
-      startMCQ(shuffle(pool).map((q) => ({ passage: '', concept: '', ...q })), true);
-      draw();
-    } else if ('cancel' in d) { controller?.abort(); }
+    else if ('offline' in d) startOffline(); else if ('cancel' in d) { controller?.abort(); }
     else if (d.opt !== undefined) {
       session.answers[session.cur] = Number(d.opt);
       draw();
@@ -512,7 +533,12 @@ export function mount(el, params) {
   window.addEventListener('yib:tick', onTick);
 
   if (phase === 'loading') phase = 'setup'; // a request was abandoned by navigating away
+  if (params.offline && (phase === 'setup' || phase === 'result' || phase === 'history')) { phase = 'setup'; session = null; }
   draw();
+  if (params.offline) {
+    history.replaceState(null, '', '#/quiz'); // so a re-render or reload doesn't start another quiz
+    if (phase === 'setup') startOffline();
+  }
   return () => {
     controller?.abort(); // don't leave a request running for a view that's gone
     document.removeEventListener('keydown', onKey);

@@ -282,7 +282,8 @@ export function mount(el, params, { setSub }) {
         <div class="card">
           <div class="card-head"><h3>${icon('target', 17)} Practise</h3></div>
           <div class="stack" style="gap:8px">
-            <a class="btn block" href="#/quiz?subject=${encodeURIComponent(sub === 'csat' ? 'csat' : sub)}&topic=${encodeURIComponent(topic)}">${icon('sparkles', 15)} Quiz me on this topic</a>
+            <a class="btn block" href="#/quiz?subject=${encodeURIComponent(sub === 'csat' ? 'csat' : sub)}&topic=${encodeURIComponent(topic)}">${icon('sparkles', 15)} AI quiz on this topic</a>
+            ${sub !== 'essay' && sub !== 'optional' ? `<a class="btn block" href="#/quiz?subject=${encodeURIComponent(sub)}&topic=${encodeURIComponent(topic)}&offline=1">${icon('book', 15)} Offline quiz (no AI)</a>` : ''}
             <a class="btn block" href="#/study?subject=${encodeURIComponent(sub)}&start=1">${icon('timer', 15)} Start a focus session</a>
           </div>
         </div>
